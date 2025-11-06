@@ -50,29 +50,29 @@ unsigned long long aplicarRegras(unsigned long long n) {
     }
 }
 
-const char* testarNumero(unsigned long long n) {
+unsigned long long testarNumero(unsigned long long n) {
     const unsigned long long LIMITE = 10000;
     unsigned long long atual = n;
     unsigned long long contador = 0;
 
     while (contador <= LIMITE) {
         if (atual == 1) {
-            return "correto";
+            return contador;
         }
         
         if (atual == 774) {
-            return "loop 774";
+            return 0;
         }
         
         if (atual == 2238) {
-            return "Crescem";
+            return 0;
         }
 
         atual = aplicarRegras(atual);
         contador++;
     }
 
-    return "Crescem fora do 2238";
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -87,15 +87,21 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    unsigned long long maxPassos = 0;
+    unsigned long long numeroMaxPassos = 0;
+
     printf("Testando numeros de 1 ate %llu:\n\n", limite);
 
     for (unsigned long long i = 1; i <= limite; i++) {
-        const char* resultado = testarNumero(i);
-        printf("%llu - %s\n", i, resultado);
+        unsigned long long resultado = testarNumero(i);
+        if (resultado > maxPassos) {
+            maxPassos = resultado;
+            numeroMaxPassos = i;
+        }
     }
+
+    printf("Numero com maior quantidade de passos: %llu\n", numeroMaxPassos);
+    printf("Quantidade de passos: %llu\n", maxPassos);
 
     return 0;
 }
-
-//Para compilar: gcc -O3 TesteNumeroProdutoDigito2.c -o TesteNumeroProdutoDigito2
-//Para rodar: ./TesteNumeroProdutoDigito2 300
