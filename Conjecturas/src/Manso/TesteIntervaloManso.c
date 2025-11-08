@@ -12,7 +12,7 @@ bool ehPrimo(long long n) {
     return true;
 }
 
-inline long long somaAlgarismo(long long n) { //inline - troca a funcao por seu conteudo
+long long somaAlgarismo(long long n) { //inline - troca a funcao por seu conteudo
     long long soma = 0;
     for (; n > 0; n /= 10) { 
         soma += n % 10;

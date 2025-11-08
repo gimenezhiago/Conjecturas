@@ -75,5 +75,5 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-//Para compilar: gcc -O3 TesteNumerosManso.c -o TesteNumerosManso
-//Para rodar: ./TesteNumerosManso 100
+//Para compilar: gcc -O3 TesteNumeroManso.c -o TesteNumeroManso
+//Para rodar: ./TesteNumeroManso 100
