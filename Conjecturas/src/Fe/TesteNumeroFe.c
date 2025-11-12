@@ -70,3 +70,7 @@ int main (int argc, char *argv[]) {
 
     return 0;
 }
+
+
+// Para compilar: gcc -O3 TesteNumeroFe.c -o TesteNumeroFe
+// Para rodar: ./TesteNumeroFe 100

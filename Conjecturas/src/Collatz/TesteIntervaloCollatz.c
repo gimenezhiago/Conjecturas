@@ -1,42 +1,29 @@
 #include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include <stdbool.h> //Para usar booleano
+#include <stdlib.h> //Para usar atoll
 
-long long somaDigitos(long long n) {
-    long long soma = 0;
-    for (; n > 0; n /= 10) {
-        soma += n % 10;
+bool ehParImpar(long long n) {
+    if (n % 2 == 0) {
+        return n/2;
+    } else {
+        return 3*n + 1;
     }
-    return soma;
 }
+
 
 long long aplicarRegras(long long n) {
-    if (n % 2 == 0) {
-        return n / 2;
-    }
-    if (n % 3 == 0) {
-        return n / 3;
-    }
-    if (n % 5 == 0) {
-        return n / 5;
-    }
-    if (n % 7 == 0) {
-        return n / 7;
-    }
-
-    return n + somaDigitos(n);
+    return ehParImpar(n);
 }
 
-void testeIntervalo (long long fim) {
-    const long long LIMITE = 1000000000000;
-
+void testeIntervalo(long long fim) {
+    const long long LIMITE = 1000000000000; //1 trilhão
     for (long long i = 1; i <= fim; i++) {
         long long atual = i;
         long long contador = 0;
         bool convergiu = false;
 
         while (contador < LIMITE) {
-            if (atual == 1) {
+            if (atual == 3 || atual == 7 || atual == 15) {
                 convergiu = true;
                 break;
             }
@@ -44,8 +31,8 @@ void testeIntervalo (long long fim) {
             atual = aplicarRegras(atual);
             contador++;
 
-            if (atual <= 0) {
-                printf("O numero %lld gerou valor invalido em %lld iteracoes. ultimo valor = %lld\n", i, contador, atual);
+            if (atual <= 0) { // checagem simples para overflow/valor inválido
+                printf("O numero %lld gerou valor invalido/overflow em %lld iteracoes. ultimo valor = %lld\n", i, contador, atual);
                 break;
             }
         }
@@ -59,10 +46,11 @@ void testeIntervalo (long long fim) {
             printf("Testados %lld numeros\n", i);
         }
     }
+    printf("Teste concluido ate %lld\n", fim);
 }
 
-int main (int argc, char *argv[]) {
-     if (argc < 2) {
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
         printf("Uso: %s <fim>\n", argv[0]);
         return 1;
     }
@@ -79,6 +67,5 @@ int main (int argc, char *argv[]) {
     return 0;
 }
 
-
-// Para compilar: gcc -O3 TesteIntervaloFe.c -o TesteIntervaloFe
-// Para rodar: ./TesteIntervaloFe 100
+// Para compilar: gcc -O3 TesteIntervaloManso.c -o TesteIntervaloManso
+// Para rodar: ./TesteIntervaloManso 100

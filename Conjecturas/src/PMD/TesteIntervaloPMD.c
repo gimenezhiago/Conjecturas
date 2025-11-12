@@ -1,31 +1,52 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <omp.h>
+
+long long substituirZeros(long long n) {
+    if (n == 0) {
+        return 2;
+    }
+
+    long long resultado = 0;
+    long long multiplicador = 1;
+
+    while (n > 0) {
+        long long digito = n % 10;
+
+        if (digito == 0) {
+            digito = 2;
+        }
+
+        resultado = digito * multiplicador + resultado;
+        multiplicador *= 10;
+        n /= 10;
+    }
+    return resultado;
+}
 
 long long produtoDigitos(long long n) {
+
     long long produto = 1;
     for (; n > 0; n /= 10) {
         long long digito = n % 10;
-        if (digito == 0) {
-            digito = 1;
-        }
         produto = produto * digito;
     }
     return produto;
 }
 
 long long aplicarRegras(long long n) {
-    long long produto = produtoDigitos(n);
+    long long numeroModificado = substituirZeros(n);
+
+    long long produto = produtoDigitos(numeroModificado);
 
     if (produto == 1) {
-        return n + 1;
+        return numeroModificado + 1;
     }
 
-    long long soma = n + produto;
+    long long soma = numeroModificado + produto;
 
-    if (n % produto == 0) {
-        return n/produto;
+    if (numeroModificado % produto == 0) {
+        return numeroModificado/produto;
     } else {
         return soma;
     }
@@ -34,7 +55,6 @@ long long aplicarRegras(long long n) {
 void testeIntervalo (long long fim) {
     const long long LIMITE = 1000000000000;
 
-    #pragma omp parallel for schedule(dynamic)
     for (long long i = 1; i <= fim; i++) {
         long long atual = i;
         long long contador = 0;
@@ -60,7 +80,6 @@ void testeIntervalo (long long fim) {
             break;
         }
 
-        #pragma omp critical
         if (i % 100000 == 0) {
             printf("Testados %lld numeros\n", i);
         }
@@ -87,5 +106,5 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-//Para compilar: gcc -O3 TesteIntervaloPSD.c -o TesteIntervaloPSD -fopenmp
-//Para rodar: ./TesteIntervaloProdutoDigito 100
+//Para compilar: gcc -O3 TesteIntervaloPMD.c -o TesteIntervaloPMD
+//Para rodar: ./TesteIntervaloPMD 100

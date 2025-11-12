@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <omp.h>
 
 long long substituirZeros(long long n) {
     if (n == 0) {
-        return 1;
+        return 2;
     }
 
     long long resultado = 0;
@@ -14,7 +15,7 @@ long long substituirZeros(long long n) {
         long long digito = n % 10;
 
         if (digito == 0) {
-            digito = 1;
+            digito = 2;
         }
 
         resultado = digito * multiplicador + resultado;
@@ -55,6 +56,7 @@ long long aplicarRegras(long long n) {
 void testeIntervalo (long long fim) {
     const long long LIMITE = 1000000000000;
 
+    #pragma omp parallel for schedule(dynamic)
     for (long long i = 1; i <= fim; i++) {
         long long atual = i;
         long long contador = 0;
@@ -80,6 +82,7 @@ void testeIntervalo (long long fim) {
             break;
         }
 
+        #pragma omp critical
         if (i % 100000 == 0) {
             printf("Testados %lld numeros\n", i);
         }
@@ -106,5 +109,5 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-//Para compilar: gcc -O3 TesteIntervaloProdutoDigito2.c -o TesteIntervaloProdutoDigito2
-//Para rodar: ./TesteIntervaloProdutoDigito2 100
+//Para compilar: gcc -O3 TesteIntervaloPMDParalelo.c -o TesteIntervaloPMDParalelo -fopenmp
+//Para rodar: ./TesteIntervaloPMDParalelo 100

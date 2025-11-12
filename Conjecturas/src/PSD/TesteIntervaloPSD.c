@@ -84,5 +84,5 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-//Para compilar: gcc -O3 TesteIntervaloProdutoDigito.c -o TesteIntervaloProdutoDigito
-//Para rodar: ./TesteIntervaloProdutoDigito 100
+//Para compilar: gcc -O3 TesteIntervaloPSD.c -o TesteIntervaloPSD
+//Para rodar: ./TesteIntervaloPSD 100

@@ -3,7 +3,7 @@
 
 long long substituirZeros(long long n) {
     if (n == 0) {
-        return 1;
+        return 2;
     }
 
     long long resultado = 0;
@@ -13,7 +13,7 @@ long long substituirZeros(long long n) {
         long long digito = n % 10;
 
         if (digito == 0) {
-            digito = 1;
+            digito = 2;
         }
 
         resultado = digito * multiplicador + resultado;
@@ -92,6 +92,6 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-//Para compilar: gcc -O3 TesteNumeroProdutoDigito2.c -o TesteNumeroProdutoDigito2
-//Para rodar: ./TesteNumeroProdutoDigito2 100
+//Para compilar: gcc -O3 TesteNumeroPMD.c -o TesteNumeroPMD
+//Para rodar: ./TesteNumeroPMD 100
 

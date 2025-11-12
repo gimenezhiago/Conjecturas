@@ -80,3 +80,7 @@ int main (int argc, char *argv[]) {
 
     return 0;
 }
+
+
+// Para compilar: gcc -O3 TesteIntervaloFeParalelo.c -o TesteIntervaloFeParalelo -fopenmp
+// Para rodar: ./TesteIntervaloFeParalelo 100
