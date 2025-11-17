@@ -1,4 +1,5 @@
-nclude <stdbool.h> //para booleano
+#include <stdio.h>
+#include <stdbool.h> //para booleano
 #include <stdlib.h> //serve para pegar o atoi
 #include <math.h> //para sqrt
 
@@ -30,8 +31,7 @@ long long proximoPrimo(long long n) {
         p++;
     }
     return p;
-}#include <stdio.h>
-#i
+}
 
 void testarConjectura(int n) {
     long long t1 = triangular(n);
@@ -45,28 +45,67 @@ void testarConjectura(int n) {
     printf("\nDivisões:\n");
     printf("%lld", atual);
 
+    // Caso especial: se o produto inicial já é primo, não divide
+    if (ehPrimo(atual)) {
+        printf("\n\n>>> RESULTADO: %lld (PRIMO) <<<\n", atual);
+        if (n % 2 == 0) {
+            printf("Conclusão: %d é PRIMO\n", n + 1);
+        }
+        return;
+    }
+
     long long divisor = 2;
     int passos = 0;
+
+    // Para n par (teste de primalidade), calculamos o limite de divisores
+    long long limite_divisor = 0;
+    if (n % 2 == 0) {
+        // Limite é aproximadamente sqrt(n+1)
+        limite_divisor = (long long)sqrt(n + 1) + 1;
+    }
 
     while(true) {
         if (atual % divisor == 0) {
             atual /= divisor;
-             printf(" / %lld = %lld", divisor, atual);
+            printf(" / %lld = %lld", divisor, atual);
             passos++;
 
             if (passos % 10 == 0) {
                 printf("\n");
             }
 
+            // Verifica se chegou a um primo
             if (ehPrimo(atual)) {
                 printf("\n\n>>> RESULTADO: %lld (PRIMO) <<<\n", atual);
+                if (n % 2 == 0) {
+                    printf("Conclusão: %d é COMPOSTO\n", n + 1);
+                }
                 return;
             }
 
+            // Verifica se é quadrado de primo
             if (ehQuadradoPrimo(atual)) {
                 long long raiz = (long long)sqrt(atual);
-                printf("\n\n>>> RESULTADO: %lld = %lld² (QUADRADO DE PRIMO) <<<\n", atual, raiz)
-                return;
+
+                // Se n é par (teste de primalidade)
+                if (n % 2 == 0) {
+                    // Verifica se a raiz é menor que sqrt(n+1)
+                    if (raiz < limite_divisor) {
+                        // Quadrado é divisível por primo menor que sqrt(n+1)
+                        // Continua dividindo
+                        printf(" [quadrado %lld² mas continua]", raiz);
+                        continue;
+                    } else {
+                        // Quadrado não é divisível por primos menores que sqrt(n+1)
+                        printf("\n\n>>> RESULTADO: %lld = %lld² (QUADRADO DE PRIMO) <<<\n", atual, raiz);
+                        printf("Conclusão: %d é PRIMO\n", n + 1);
+                        return;
+                    }
+                } else {
+                    // n ímpar - apenas verifica a conjectura
+                    printf("\n\n>>> RESULTADO: %lld = %lld² (QUADRADO DE PRIMO) <<<\n", atual, raiz);
+                    return;
+                }
             }
 
         } else {
@@ -93,7 +132,8 @@ int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("Uso: %s <n>\n", argv[0]);
         printf("Testa T(n) x T(n+1)\n");
-        printf("Exemplo: %s 6\n", argv[0]);
+        printf("Para n par: testa primalidade de (n+1)\n");
+        printf("Para n ímpar: apenas verifica a conjectura\n");
         return 1;
     }
     
@@ -111,4 +151,3 @@ int main(int argc, char *argv[]) {
 
 // Para compilar: gcc -O3 TesteNumeroTri.c -o TesteNumeroTri -lm
 // Para rodar: ./TesteNumeroTri 6
-

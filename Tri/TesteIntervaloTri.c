@@ -45,8 +45,21 @@ void testarConjectura(int n) {
     printf("\nDivisões:\n");
     printf("%lld", atual);
     
+    if (ehPrimo(atual)) {
+        printf("\n\n>>> RESULTADO: %lld (PRIMO) <<<\n", atual);
+        if (n % 2 == 0) {
+            printf("Conclusão: %d é PRIMO\n", n + 1);
+        }
+        return;
+    }
+
     long long divisor = 2;
     int passos = 0;
+
+    long long limite_divisor = 0;
+    if (n % 2 == 0) {
+        limite_divisor = (long long)sqrt(n + 1) + 1;
+    }
     
     while (true) {
         if (atual % divisor == 0) {
@@ -61,13 +74,30 @@ void testarConjectura(int n) {
             // Verifica se chegou a um primo ou quadrado de primo
             if (ehPrimo(atual)) {
                 printf("\n\n>>> RESULTADO: %lld (PRIMO) <<<\n", atual);
+                if (n % 2 == 0) {
+                    printf("Conclusão: %d é COMPOSTO\n", n + 1);
+                }
                 return;
             }
             
             if (ehQuadradoPrimo(atual)) {
                 long long raiz = (long long)sqrt(atual);
-                printf("\n\n>>> RESULTADO: %lld = %lld² (QUADRADO DE PRIMO) <<<\n", atual, raiz);
-                return;
+
+                if (n % 2 == 0) {
+
+                    if (raiz < limite_divisor) {
+                        printf(" [quadrado %lld² mas continua dividindo]", raiz);
+                        continue;
+                    } else {
+                        printf("\n\n>>> RESULTADO: %lld = %lld² (QUADRADO DE PRIMO) <<<\n", atual, raiz);
+                        printf("Conclusão: %d é COMPOSTO\n", n + 1);
+                        return;
+
+                    }
+                } else {
+                    printf("\n\n>>> RESULTADO: %lld = %lld² (QUADRADO DE PRIMO) <<<\n", atual, raiz);
+                    return;
+                }
             }
         } else {
             // Avança para o próximo primo
@@ -95,7 +125,8 @@ int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("Uso: %s <numero>\n", argv[0]);
         printf("Testa T(n) x T(n+1) de n=1 até n=<numero>\n");
-        printf("Exemplo: %s 20\n", argv[0]);
+        printf("Para n par: testa primalidade de (n+1)\n");
+        printf("Para n ímpar: apenas verifica a conjectura\n");
         return 1;
     }
     
@@ -109,6 +140,7 @@ int main(int argc, char *argv[]) {
     
 
     printf("Intervalo: n = 1 até %d\n", fim);
+    printf("(n par = teste de primalidade; n ímpar = apenas conjectura)\n");
     
     for (int i = 1; i <= fim; i++) {
         testarConjectura(i);
