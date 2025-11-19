@@ -1,148 +1,185 @@
+// TesteIntervaloTriPares.c
+// Corrigido conforme regras do "Fê" (divisões por primos em ordem, testar n pares, incluir 2, ...)
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 bool ehPrimo(long long n) {
     if (n <= 1) return false;
     if (n == 2) return true;
     if (n % 2 == 0) return false;
-    for (long long i = 3; i * i <= n; i += 2) {
+    long long r = (long long)sqrt((double)n);
+    for (long long i = 3; i <= r; i += 2) {
         if (n % i == 0) return false;
     }
     return true;
 }
 
-bool ehQuadradoPrimo(long long n) {
-    long long raiz = (long long)sqrt(n);
+bool ehQuadradoPrimo(long long n, long long *raiz_out) {
+    if (n <= 0) return false;
+    long long raiz = (long long) llround(sqrt((double)n));
     if (raiz * raiz == n && ehPrimo(raiz)) {
+        if (raiz_out) *raiz_out = raiz;
         return true;
     }
     return false;
 }
 
-long long triangular(int n) {
-    return (long long)n * (n + 1) / 2;
+long long triangular(long long n) {
+    return n * (n + 1) / 2;
 }
 
 long long proximoPrimo(long long n) {
+    if (n < 2) return 2;
     long long p = n + 1;
+    if (p % 2 == 0 && p != 2) p++;
     while (!ehPrimo(p)) {
-        p++;
+        p += 2;
     }
     return p;
 }
 
+/*
+  testarPrimalidade:
+  - recebe n (par)
+  - aplica o procedimento do Fê em Tn x T(n+1)
+  - retorna true se (n+1) for primo, false se composto
+*/
 bool testarPrimalidade(int n, bool verbose) {
     long long t1 = triangular(n);
     long long t2 = triangular(n + 1);
     long long produto = t1 * t2;
     long long atual = produto;
-    
+    long long alvo = (long long)(n + 1);
+
     if (verbose) {
         printf("\n=== Testando T%d x T%d ===\n", n, n + 1);
         printf("T%d = %lld, T%d = %lld\n", n, t1, n + 1, t2);
         printf("Produto: %lld x %lld = %lld\n", t1, t2, produto);
-        printf("\nDivisões:\n");
-        printf("%lld", atual);
-    }
-    
-    if (ehPrimo(atual)) {
-        if (verbose) {
-            printf("\n\n>>> RESULTADO: %lld (PRIMO) <<<\n", atual);
-            printf("Conclusão: %d é PRIMO\n", n + 1);
-        }
-        return true; // (n+1) é primo
+        printf("\nDivisões:\n%lld", atual);
     }
 
+    // Se já for primo no começo (caso raro), segundo o Fê concluiríamos que (n+1) é composto?
+    // No enunciado, T1xT2 = 3 é primo e não se divide — mas Fê quer que não se divida.
+    // A fórmula abaixo segue a regra principal: dividimos por primos < (n+1).
     long long divisor = 2;
-    int passos = 0;
-    long long limite_divisor = (long long)sqrt(n + 1);
-    
-    while (true) {
-        if (atual % divisor == 0) {
-            atual = atual / divisor;
+
+    while (divisor < alvo) {
+        bool dividiuQualquerVez = false;
+        while (atual % divisor == 0) {
+            atual /= divisor;
+            dividiuQualquerVez = true;
             if (verbose) {
                 printf(" / %lld = %lld", divisor, atual);
-                passos++;
-                
-                if (passos % 10 == 0) {
-                    printf("\n");
-                }
             }
-            
+            // Se durante as divisões o resultado virar primo => concluímos (n+1) é composto
             if (ehPrimo(atual)) {
                 if (verbose) {
                     printf("\n\n>>> RESULTADO: %lld (PRIMO) <<<\n", atual);
-                    printf("Conclusão: %d é COMPOSTO\n", n + 1);
+                    printf("Conclusão: %lld é COMPOSTO\n", alvo);
                 }
                 return false; // (n+1) é composto
             }
-            
-            if (ehQuadradoPrimo(atual)) {
-                long long raiz = (long long)sqrt(atual);
+        }
+        // Avança para o próximo primo (mantendo-se abaixo de alvo)
+        divisor = proximoPrimo(divisor);
+        if (divisor >= alvo) break;
+    }
 
-                if (raiz > limite_divisor) {
-                    if (verbose) {
-                        printf("\n\n>>> RESULTADO: %lld = %lld² (QUADRADO DE PRIMO) <<<\n", atual, raiz);
-                        printf("Conclusão: %d é PRIMO\n", n + 1);
-                    }
-                    return true; // (n+1) é primo
-                } else {
-                    if (verbose) {
-                        printf(" [quadrado %lld² mas continua]", raiz);
-                    }
-                    continue;
-                }
+    // Ao terminar de testar TODOS os primos < (n+1), analisamos o que sobrou em 'atual'
+    if (verbose) {
+        printf("\n\nResultado final após testar primos < %lld: %lld\n", alvo, atual);
+    }
+
+    if (atual == 1) {
+        // tudo foi fatorado por primos < (n+1) -> n+1 é composto
+        if (verbose) printf("Conclusão: %lld é COMPOSTO (fatorado completamente por primos menores)\n", alvo);
+        return false;
+    }
+
+    // Se for quadrado de primo e a raiz for exatamente n+1 => n+1 primo (casos como 169 -> 13^2)
+    long long raiz;
+    if (ehQuadradoPrimo(atual, &raiz)) {
+        if (raiz == alvo) {
+            if (verbose) {
+                printf(">>> RESULTADO: %lld = %lld^2 (QUADRADO DE PRIMO) <<<\n", atual, raiz);
+                printf("Conclusão: %lld é PRIMO\n", alvo);
             }
+            return true; // (n+1) é primo
         } else {
-            divisor = proximoPrimo(divisor);
-            
-            if (divisor > atual) {
-                if (verbose) {
-                    printf("\n\nERRO: Divisor maior que o número atual!\n");
-                    printf("Resultado final: %lld\n", atual);
-                }
-                return false; // Assume composto em caso de erro
+            // ex.: se raiz < alvo então deveria ter sido dividida antes => então composto
+            if (verbose) {
+                printf("Quadrado de primo %lld^2 (raiz %lld) mas raiz != %lld -> CONCLUI: COMPOSTO\n", raiz, raiz, alvo);
             }
+            return false;
         }
     }
+
+    // Se o que sobrou é primo e igual a alvo -> conclui primo
+    if (ehPrimo(atual)) {
+        if (atual == alvo) {
+            if (verbose) {
+                printf(">>> RESULTADO: %lld (PRIMO) <<<\n", atual);
+                printf("Conclusão: %lld é PRIMO\n", alvo);
+            }
+            return true;
+        } else {
+            // se o que sobrou é primo diferente de alvo (maior), então concluímos composto
+            if (verbose) {
+                printf("Sobra primo %lld != %lld -> CONCLUI: COMPOSTO\n", atual, alvo);
+            }
+            return false;
+        }
+    }
+
+    // Nenhum dos casos acima: não é 1, não é primo, não é quadrado-primo => composto
+    if (verbose) {
+        printf("Sobra %lld (não primo, não 1) -> Conclusão: %lld é COMPOSTO\n", atual, alvo);
+    }
+    return false;
 }
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("Uso: %s <quantidade_primos> [verbose]\n", argv[0]);
-        printf("Gera lista de primos usando o teste de triangulares\n");
+        printf("Gera lista de primos usando o teste de triangulares (apenas n pares)\n");
         return 1;
     }
-    
+
     int qtd_primos = atoi(argv[1]);
     bool verbose = (argc >= 3 && strcmp(argv[2], "verbose") == 0);
-    
+
     if (qtd_primos <= 0) {
         printf("Parâmetro inválido: %s\n", argv[1]);
         printf("A quantidade deve ser maior que 0\n");
         return 1;
     }
-    
+
     printf("Gerando os %d primeiros primos...\n\n", qtd_primos);
-    
-    int *primos = (int *)malloc(qtd_primos * sizeof(int)); 
+
+    int *primos = (int *)malloc(qtd_primos * sizeof(int));
+    if (!primos) {
+        fprintf(stderr, "Erro: malloc\n");
+        return 1;
+    }
+
     int contador = 0;
-    
+
     // Adiciona o 2 como primeiro primo
     primos[contador++] = 2;
     if (verbose) {
-        printf("Primo #1: 2 (dado)\n");
+        printf("Primo #1: 2 (adicionado manualmente)\n");
     }
- 
-    int n = 2;
-    
+
+    int n = 2; // começar com n par = 2 -> testa primalidade de n+1 = 3
+
     while (contador < qtd_primos) {
-        int candidato = n + 1; // O número sendo testado
-        
+        int candidato = n + 1; // número cuja primalidade estamos testando
         bool eh_primo_result = testarPrimalidade(n, verbose);
-        
+
         if (eh_primo_result) {
             primos[contador] = candidato;
             contador++;
@@ -150,26 +187,21 @@ int main(int argc, char *argv[]) {
                 printf("\n>>> Primo #%d encontrado: %d <<<\n", contador, candidato);
             }
         }
-        
-        n += 2; // Avança para o próximo n par
+
+        n += 2; // avança para próximo n par
+        // prevenir overflow de n (caso usuário peça muitos primos); mas deixei simples
     }
 
-    printf("LISTA DOS %d PRIMEIROS PRIMOS:\n", qtd_primos);
-
+    printf("\nLISTA DOS %d PRIMEIROS PRIMOS:\n", qtd_primos);
     for (int i = 0; i < qtd_primos; i++) {
         printf("%4d", primos[i]);
-        if ((i + 1) % 10 == 0) {
-            printf("\n");
-        } else {
-            printf(" ");
-        }
+        if ((i + 1) % 10 == 0) printf("\n");
+        else printf(" ");
     }
-    if (qtd_primos % 10 != 0) {
-        printf("\n");
-    }
-    
+    if (qtd_primos % 10 != 0) printf("\n");
+
     printf("O %dº primo é: %d\n", qtd_primos, primos[qtd_primos - 1]);
-    
+
     printf("\nVerificando consistência...\n");
     bool correto = true;
     for (int i = 0; i < qtd_primos; i++) {
@@ -178,16 +210,8 @@ int main(int argc, char *argv[]) {
             correto = false;
         }
     }
-    
-    if (correto) {
-        printf("Todos os números da lista são primos!\n");
-    }
-    
+    if (correto) printf("Todos os números da lista são primos!\n");
+
     free(primos);
-    
     return 0;
 }
-
-// Para compilar: gcc -O3 TesteIntervaloTri.c -o TesteIntervaloTri -lm
-// Para rodar: ./TesteIntervaloTri 1000
-// Para ver detalhes: ./TesteIntervaloTri 10 verbose
