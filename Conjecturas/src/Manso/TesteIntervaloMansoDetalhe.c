@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Testando ate %lld\n", fim);
-    printf("============================================")
+    printf("============================================");
     testeIntervalo(fim);
 
     return 0;
