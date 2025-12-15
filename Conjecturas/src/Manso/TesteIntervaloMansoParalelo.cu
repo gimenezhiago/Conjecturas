@@ -118,4 +118,24 @@ int main(int argc, char *argv[]) {
         printf("Parametro invalido: %s\n", argv[1]);
         return 1;
     }
+
+    int deviceCount;
+    CUDA_CHECK(cudaGetDeviceCount(&deviceCount));
+    if (deviceCount == 0) {
+        printf("Nenhuma GPU CUDA encontrado.\n");
+        return 1;
+    }
+
+    cudaDeviceProp prop;
+    CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
+    printf("Usando GPU: %s\n", prop.name);
+    printf("Memoria Global: %lu MB\n", prop.totalGlobalMem / (1024 * 1024));
+    printf("Compute Capability: %d.%d\n", prop.major, prop.minor);
+
+    printf("Testando ate %lld\n", fim);
+    testeIntervalo(fim);
+    return 0;
 }
+
+// Para compilar: nvcc -O3 TesteIntervaloMansoParalelo.cu -o TesteIntervaloMansoParalelo
+// Para rodar: ./TesteIntervaloMansoParalelo 100
