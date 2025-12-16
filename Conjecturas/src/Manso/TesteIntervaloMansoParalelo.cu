@@ -1,14 +1,15 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
+#include <stdlib.h>
 
 #define LIMITE 1000000000000LL //1 trilhão
 
 __device__ bool ehPrimo(long long int n) {
     if (n <= 1) return false;
-    if (n <= 3) return true;
-    if (n % 2 == 0 || n % 3 == 0) return false;
-    for (long long int i = 5; i * i <= n; i += 6) {
-        if (n % i == 0 || n % (i + 2) == 0) return false;
+    if (n == 2) return true;
+    if (n % 2 == 0) return false;
+    for (long long i = 3; i * i <= n; i += 2) {
+        if (n % i == 0) return false;
     }
     return true;
 }
@@ -18,6 +19,7 @@ __device__ long long somaAlgarismo(long long n) {
     for (; n > 0; n /= 10) {
         soma += n % 10;
     }
+    return soma;
 }
 
 __device__ long long aplicarRegras(long long n) {
@@ -26,11 +28,11 @@ __device__ long long aplicarRegras(long long n) {
     } else if (n % 5 == 0) {
         return n / 5;
     } else if (n % 9 == 0) {
-        return n / 9;
+        return n + 1;
     } else if (n % 2 == 0) {
         return n / 2;
     } else {
-        return somaAlgarismo(n);
+        return somaAlgarismo(n) + n;
     }
 }
 
@@ -39,6 +41,8 @@ __global__ void testeConvergenciaKernel(long long inicio, long long fim, int *re
     long long numero = inicio + idx;
 
     if (numero > fim) return;
+
+    long long local_idx = numero - inicio;
 
     long long atual = numero;
     long long contador = 0;
@@ -56,7 +60,7 @@ __global__ void testeConvergenciaKernel(long long inicio, long long fim, int *re
         if (atual <= 0) {
             printf("O numero %lld gerou valor invalido/overflow em %lld iteracoes. ultimo valor = %lld\n", 
                    numero, contador, atual);
-            resultados[idx] = -1;
+            resultados[local_idx] = -1;
             return;
         }
     }
@@ -64,9 +68,9 @@ __global__ void testeConvergenciaKernel(long long inicio, long long fim, int *re
     if (!convergiu) {
         printf("O numero %lld gerou valor invalido/overflow em %lld iteracoes. ultimo valor = %lld\n", 
                    numero, contador, atual);
-        resultados[idx] = 0;
+        resultados[local_idx] = 0;
     } else {
-        resultados[idx] = 1;
+        resultados[local_idx] = 1;
     }
 }
 
@@ -85,24 +89,24 @@ void testeIntervalo(long long fim) {
 
     printf("Threads por bloco: %d\n", threadsPorBloco);
 
-     for (long long lote_inicio = 1; lote_inicio <= fim; lote_inicio += MAX_NUMEROS_POR_LOTE) {
-        long long lote_fim = (lote_inicio + MAX_NUMEROS_POR_LOTE - 1 < fim) ? 
-                              lote_inicio + MAX_NUMEROS_POR_LOTE - 1 : fim;
+     for (long long lote_inicio = 1; lote_inicio <= fim; lote_inicio += max_numeros_por_lote) {
+        long long lote_fim = (lote_inicio + max_numeros_por_lote - 1 < fim) ? 
+                              lote_inicio + max_numeros_por_lote - 1 : fim;
         long long numeros_neste_lote = lote_fim - lote_inicio + 1;
         
-        int blocos = (numeros_neste_lote + THREADS_POR_BLOCO - 1) / THREADS_POR_BLOCO;
+        int blocos = (int)((numeros_neste_lote + threadsPorBloco - 1) / threadsPorBloco);
         
         int *d_resultados;
         CUDA_CHECK(cudaMalloc(&d_resultados, numeros_neste_lote * sizeof(int)));
         
-        testeConvergenciaKernel<<<blocos, THREADS_POR_BLOCO>>>(lote_inicio, lote_fim, d_resultados);
+        testeConvergenciaKernel<<<blocos, threadsPorBloco>>>(lote_inicio, lote_fim, d_resultados);
         
         CUDA_CHECK(cudaDeviceSynchronize());
         CUDA_CHECK(cudaGetLastError());
         
         CUDA_CHECK(cudaFree(d_resultados));
         
-        printf("Testados %lld numeros (lote ate %lld)\n", lote_fim, lote_fim);
+        printf("Testados %lld numeros (lote ate %lld)\n", numeros_neste_lote, lote_fim);
     }
     printf("Teste de intervalo concluido ate %lld\n", fim);
 }
@@ -125,12 +129,6 @@ int main(int argc, char *argv[]) {
         printf("Nenhuma GPU CUDA encontrado.\n");
         return 1;
     }
-
-    cudaDeviceProp prop;
-    CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
-    printf("Usando GPU: %s\n", prop.name);
-    printf("Memoria Global: %lu MB\n", prop.totalGlobalMem / (1024 * 1024));
-    printf("Compute Capability: %d.%d\n", prop.major, prop.minor);
 
     printf("Testando ate %lld\n", fim);
     testeIntervalo(fim);

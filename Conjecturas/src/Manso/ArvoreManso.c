@@ -90,7 +90,7 @@ void arvore(long long limite, int profundidade) {
 
         tamanhoAtual = tamanhoProximo;
 
-        print("\n");
+        printf("\n");
     }
 
     free(nivelAtual);

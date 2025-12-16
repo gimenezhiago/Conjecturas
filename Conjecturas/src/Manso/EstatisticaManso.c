@@ -101,11 +101,11 @@ int main(int argc, char *argv[]) {
     printf("Total de aplicações da regra PAR: %lld\n", totalPar);
     printf("Total de aplicações da regra SOMA DOS ALGARISMOS: %lld\n", totalSoma);
 
-    prinft("Porcentagem PRIMO: %.2f%%\n", (double)totalPrimo * 100.0 / totalPassos);
-    prinft("Porcentagem DIVISÍVEL POR 5: %.2f%%\n", (double)totalDiv5 * 100.0 / totalPassos);
-    prinft("Porcentagem DIVISÍVEL POR 9: %.2f%%\n", (double)totalDiv9 * 100.0 / totalPassos);
-    prinft("Porcentagem PAR: %.2f%%\n", (double)totalPar * 100.0 / totalPassos);
-    prinft("Porcentagem SOMA DOS ALGARISMOS: %.2f%%\n", (double)totalSoma * 100.0 / totalPassos);
+    printf("Porcentagem PRIMO: %.2f%%\n", (double)totalPrimo * 100.0 / totalPassos);
+    printf("Porcentagem DIVISÍVEL POR 5: %.2f%%\n", (double)totalDiv5 * 100.0 / totalPassos);
+    printf("Porcentagem DIVISÍVEL POR 9: %.2f%%\n", (double)totalDiv9 * 100.0 / totalPassos);
+    printf("Porcentagem PAR: %.2f%%\n", (double)totalPar * 100.0 / totalPassos);
+    printf("Porcentagem SOMA DOS ALGARISMOS: %.2f%%\n", (double)totalSoma * 100.0 / totalPassos);
 
     return 0;
 }

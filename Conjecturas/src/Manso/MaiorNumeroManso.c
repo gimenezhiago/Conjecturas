@@ -48,17 +48,23 @@ void analisarNumero(long long n) {
         }
 
         long long proximo = aplicarRegras(atual);
+        iteracoes++;
 
         if (iteracoes > LIMITE) {
             printf("Numero %lld excedeu o limite de %lld iteracoes sem convergir. Ultimo valor = %lld\n", inicial, LIMITE, atual);
             return;
         }
 
-        if (atual < 0) {
-            printf("Numero %lld gerou valor invalido/overflow em %lld iteracoes. ultimo valor = %lld\n", inicial, iteracoes, atual);
+        if (proximo < 0) {
+            printf("Numero %lld gerou valor invalido/overflow em %lld iteracoes. ultimo valor = %lld\n", inicial, iteracoes, proximo);
             return;
         }
 
+        if (proximo > maximo) {
+            maximo = proximo;
+        }
+
+        atual = proximo;
     }
 
     double fator = (double)maximo / (double)inicial; // Cálculo do fator de crescimento
