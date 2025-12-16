@@ -69,7 +69,7 @@ void analisarNumero(long long n) {
 
     double fator = (double)maximo / (double)inicial; // Cálculo do fator de crescimento
 
-    if (maximo > inicial * 10 || iteracoes > 100) { 
+    if (maximo > inicial * 100 || iteracoes > 100) { 
         printf("\n=== Número Difícil ===\n");
         printf("Número Inicial: %lld\n", inicial);
         printf("Maior valor: %lld\n", maximo);
