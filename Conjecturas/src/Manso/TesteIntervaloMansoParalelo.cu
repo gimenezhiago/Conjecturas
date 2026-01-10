@@ -85,29 +85,60 @@ __global__ void testeConvergenciaKernel(long long inicio, long long fim, int *re
 
 void testeIntervalo(long long fim) {
     const int threadsPorBloco = 256;
-    const long long max_numeros_por_lote = 1000000; // 1 milhão
+    const long long max_numeros_por_lote = 1000000; // 1 milhão (ajuste conforme memória/GPU)
 
     printf("Threads por bloco: %d\n", threadsPorBloco);
 
-     for (long long lote_inicio = 1; lote_inicio <= fim; lote_inicio += max_numeros_por_lote) {
+    for (long long lote_inicio = 1; lote_inicio <= fim; lote_inicio += max_numeros_por_lote) {
         long long lote_fim = (lote_inicio + max_numeros_por_lote - 1 < fim) ? 
                               lote_inicio + max_numeros_por_lote - 1 : fim;
         long long numeros_neste_lote = lote_fim - lote_inicio + 1;
         
         int blocos = (int)((numeros_neste_lote + threadsPorBloco - 1) / threadsPorBloco);
         
-        int *d_resultados;
+        int *d_resultados = NULL;
         CUDA_CHECK(cudaMalloc(&d_resultados, numeros_neste_lote * sizeof(int)));
-        
+        /* Inicializa com 1 (assumimos convergência) para facilitar verificações no host */
+        CUDA_CHECK(cudaMemset(d_resultados, 1, numeros_neste_lote * sizeof(int)));
+
         testeConvergenciaKernel<<<blocos, threadsPorBloco>>>(lote_inicio, lote_fim, d_resultados);
-        
+
         CUDA_CHECK(cudaDeviceSynchronize());
         CUDA_CHECK(cudaGetLastError());
-        
+
+        /* Copia resultados para host (usa memória pinada para maior banda) */
+        int *h_resultados = NULL;
+        CUDA_CHECK(cudaMallocHost((void**)&h_resultados, numeros_neste_lote * sizeof(int)));
+        CUDA_CHECK(cudaMemcpy(h_resultados, d_resultados, numeros_neste_lote * sizeof(int), cudaMemcpyDeviceToHost));
+
+        /* Varre resultados e interrompe se encontrar falha (overflow ou não convergiu) */
+        bool encontrouFalha = false;
+        for (long long j = 0; j < numeros_neste_lote; ++j) {
+            if (h_resultados[j] != 1) {
+                long long numero = lote_inicio + j;
+                if (h_resultados[j] == -1) {
+                    printf("O numero %lld gerou valor invalido/overflow (detectado no host).\n", numero);
+                } else if (h_resultados[j] == 0) {
+                    printf("O numero %lld nao convergiu (>%lld iteracoes).\n", numero, LIMITE);
+                } else {
+                    printf("O numero %lld retornou codigo inesperado %d\n", numero, h_resultados[j]);
+                }
+                encontrouFalha = true;
+                break;
+            }
+        }
+
+        CUDA_CHECK(cudaFreeHost(h_resultados));
         CUDA_CHECK(cudaFree(d_resultados));
-        
+
         printf("Testados %lld numeros (lote ate %lld)\n", numeros_neste_lote, lote_fim);
+
+        if (encontrouFalha) {
+            printf("Interrompendo execucao devido a falha detectada.\n");
+            return; // encerra o teste antecipadamente
+        }
     }
+
     printf("Teste de intervalo concluido ate %lld\n", fim);
 }
 
