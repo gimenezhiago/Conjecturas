@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <omp.h>
 
-long long somaDigitos(long long n) {
+inline long long somaDigitos(long long n) {
     long long soma = 0;
     for (; n > 0; n /= 10) {
         soma += n % 10;
@@ -12,31 +12,35 @@ long long somaDigitos(long long n) {
 }
 
 long long aplicarRegras(long long n) {
-    if (n % 2 == 0) {
-        return n / 2;
-    }
-    if (n % 3 == 0) {
-        return n / 3;
-    }
-    if (n % 5 == 0) {
-        return n / 5;
-    }
-    if (n % 7 == 0) {
-        return n / 7;
-    }
+    if (n % 2 == 0) return n / 2;
+    if (n % 3 == 0) return n / 3;
+    if (n % 5 == 0) return n / 5;
+    if (n % 7 == 0) return n / 7;
 
     return n + somaDigitos(n);
 }
 
-void testeIntervalo (long long fim) {
-    const long long LIMITE = 1000000000000;
-    #pragma omp parallel for schedule(dynamic) // Paraleliza o for com OpenMP
-    for (long long i = 1; i <= fim; i++) {
+void testeIntervalo(long long fim) {
+    const long long LIMITE = 1000000000000LL; // 1 trilhão
+    volatile int abortFlag = 0; // sinaliza para encerrar o laço quando um caso falhar
+    long long i;
+
+    #pragma omp parallel for schedule(dynamic) default(none) shared(fim, LIMITE, abortFlag) private(i)
+    for (i = 1; i <= fim; i++) {
+        int localAbort = 0;
+        #pragma omp atomic read
+        localAbort = abortFlag;
+        if (localAbort) continue; // outro thread já pediu abort
+
         long long atual = i;
         long long contador = 0;
         bool convergiu = false;
 
         while (contador < LIMITE) {
+            #pragma omp atomic read
+            localAbort = abortFlag;
+            if (localAbort) break; // verifica sinal de abort
+
             if (atual == 1) {
                 convergiu = true;
                 break;
@@ -45,26 +49,39 @@ void testeIntervalo (long long fim) {
             atual = aplicarRegras(atual);
             contador++;
 
-            if (atual <= 0) {
-                printf("O numero %lld gerou valor invalido em %lld iteracoes. ultimo valor = %lld\n", i, contador, atual);
+            if (atual <= 0) { // checagem simples para overflow/valor inválido
+                #pragma omp critical
+                {
+                    printf("O numero %lld gerou valor invalido/overflow em %lld iteracoes. ultimo valor = %lld\n", i, contador, atual);
+                }
+                #pragma omp atomic write
+                abortFlag = 1;
                 break;
             }
         }
 
         if (!convergiu) {
-            printf("O numero %lld nao convergiu (>%lld iteracoes). ultimo valor = %lld\n", i, LIMITE, atual);
-            break;
+            #pragma omp critical
+            {
+                printf("O numero %lld nao convergiu (>%lld iteracoes). ultimo valor = %lld\n", i, LIMITE, atual);
+            }
+            #pragma omp atomic write
+            abortFlag = 1;
         }
-        
-        #pragma omp critical //seção crítica para evitar que múltiplas threads imprimam ao mesmo tempo
-        if (i % 100000 == 0) {
-            printf("Testados %lld numeros\n", i);
+
+        #pragma omp critical
+        {
+            if (i % 100000 == 0) {
+                printf("Testados %lld numeros\n", i);
+            }
         }
     }
+
+    printf("Teste concluido ate %lld\n", fim);
 }
 
-int main (int argc, char *argv[]) {
-     if (argc < 2) {
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
         printf("Uso: %s <fim>\n", argv[0]);
         return 1;
     }
@@ -81,6 +98,5 @@ int main (int argc, char *argv[]) {
     return 0;
 }
 
-
-// Para compilar: gcc -O3 TesteIntervaloFeParalelo.c -o TesteIntervaloFeParalelo -fopenmp
+// Para compilar com GCC (MinGW/MSYS): gcc -O3 -fopenmp TesteIntervaloFeParalelo.c -o TesteIntervaloFeParalelo
 // Para rodar: ./TesteIntervaloFeParalelo 100

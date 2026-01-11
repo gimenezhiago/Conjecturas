@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
     printf("Total de aplicações da regra DIVISÍVEL POR 9: %lld\n", totalDiv9);
     printf("Total de aplicações da regra PAR: %lld\n", totalPar);
     printf("Total de aplicações da regra SOMA DOS ALGARISMOS: %lld\n", totalSoma);
-
+    printf("============================================\n");
     printf("Porcentagem PRIMO: %.2f%%\n", (double)totalPrimo * 100.0 / totalPassos);
     printf("Porcentagem DIVISÍVEL POR 5: %.2f%%\n", (double)totalDiv5 * 100.0 / totalPassos);
     printf("Porcentagem DIVISÍVEL POR 9: %.2f%%\n", (double)totalDiv9 * 100.0 / totalPassos);

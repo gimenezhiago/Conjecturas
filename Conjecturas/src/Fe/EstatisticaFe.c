@@ -83,9 +83,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("\n============================================\n");
     printf("Analise concluida ate %lld\n", fim);
-    printf("============================================\n");
     printf("Total de passos: %lld\n", totalPassos);
     printf("Total de aplicacoes da regra PAR: %lld\n", totalPar);
     printf("Total de aplicacoes da regra DIVISIVEL POR 3: %lld\n", totalDiv3);

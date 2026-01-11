@@ -60,8 +60,7 @@ void analisarNumero(long long n) {
 
     double fator = (double)maximo / (double)inicial;
 
-    // Critério para números "difíceis": crescimento significativo ou muitas iterações
-    if (maximo > inicial * 1000 || iteracoes > 1000) {
+    if (maximo > inicial * 500 || iteracoes > 500) {
         printf("\n=== Numero Dificil ===\n");
         printf("Numero Inicial: %lld\n", inicial);
         printf("Maior valor: %lld\n", maximo);

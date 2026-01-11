@@ -41,22 +41,16 @@ void encontrarPreimagens(long long y, long long limite) {
     if (count == 0) {
         printf("Nenhuma pre-imagem encontrada para %lld no intervalo especificado.\n", y);
         printf("\n");
-    } else {
-        printf("Total de pre-imagens encontradas: %lld\n\n", count);
-    }
+    } 
 }
 
 void arvore(long long limite, int profundidade) {
-    // Para a Conjectura Fe, começamos com o valor 1 (o único ponto fixo)
     long long *nivelAtual = malloc(sizeof(long long) * 1000000);
     long long *nivelProximo = malloc(sizeof(long long) * 1000000);
     long long tamanhoAtual = 1;
     long long tamanhoProximo = 0;
 
     nivelAtual[0] = 1;
-
-    printf("Ponto de convergencia: 1\n");
-    printf("============================================\n");
 
     for (int d = 1; d <= profundidade; d++) {
         printf("Profundidade %d:\n", d);
