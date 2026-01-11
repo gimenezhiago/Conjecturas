@@ -1,71 +1,157 @@
 #include <stdio.h>
-#include <stdbool.h> //Para usar booleano
-#include <stdlib.h> //Para usar atoll
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
 
-bool ehParImpar(long long n) {
-    if (n % 2 == 0) {
-        return n/2;
-    } else {
-        return 3*n + 1;
-    }
-}
-
-
+// Regras de Collatz (par/ímpar)
 long long aplicarRegras(long long n) {
-    return ehParImpar(n);
+    if (n % 2 == 0) {
+        return n / 2;
+    } else {
+        return 3 * n + 1;
+    }
 }
 
-void testeIntervalo(long long fim) {
-    const long long LIMITE = 1000000000000; //1 trilhão
-    for (long long i = 1; i <= fim; i++) {
-        long long atual = i;
-        long long contador = 0;
-        bool convergiu = false;
+// Gera a sequência a(n) = 4*a(n-1) + 1
+void gerarSequencia(long long *seq, int n) {
+    seq[0] = 1;
+    printf("a(0) = %lld\n", seq[0]);
+    
+    for (int i = 1; i <= n; i++) {
+        seq[i] = 4 * seq[i-1] + 1;
+        printf("a(%d) = %lld\n", i, seq[i]);
+    }
+    printf("\n");
+}
 
-        while (contador < LIMITE) {
-            if (atual == 3 || atual == 7 || atual == 15) {
-                convergiu = true;
-                break;
-            }
-
-            atual = aplicarRegras(atual);
-            contador++;
-
-            if (atual <= 0) { // checagem simples para overflow/valor inválido
-                printf("O numero %lld gerou valor invalido/overflow em %lld iteracoes. ultimo valor = %lld\n", i, contador, atual);
-                break;
+// Verifica se um número converge para algum valor da sequência
+bool verificarConvergencia(long long num, long long *seq, int tamanhoSeq, int *indiceDaSequencia) {
+    const long long LIMITE = 10000000; // 10 milhões de iterações
+    long long atual = num;
+    long long contador = 0;
+    
+    // Ignora potências de 2 (otimização do código original)
+    bool ehPotenciaDe2 = (num > 0) && ((num & (num - 1)) == 0);
+    if (ehPotenciaDe2) {
+        *indiceDaSequencia = -1; // Marca como potência de 2
+        return true;
+    }
+    
+    while (contador < LIMITE) {
+        // Verifica se convergiu para algum valor da sequência
+        for (int i = 0; i <= tamanhoSeq; i++) {
+            if (atual == seq[i]) {
+                *indiceDaSequencia = i;
+                return true;
             }
         }
-
-        if (!convergiu) {
-            printf("O numero %lld nao convergiu (>%lld iteracoes). ultimo valor = %lld\n", i, LIMITE, atual);
-            break;
-        }
-
-        if (i % 100000 == 0) {
-            printf("Testados %lld numeros\n", i);
+        
+        atual = aplicarRegras(atual);
+        contador++;
+        
+        if (atual <= 0) {
+            printf("Numero %lld gerou overflow!\n", num);
+            return false;
         }
     }
-    printf("Teste concluido ate %lld\n", fim);
+    
+    printf("FALHA: Numero %lld nao convergiu em %lld iteracoes. Ultimo valor: %lld\n", 
+           num, LIMITE, atual);
+    return false;
+}
+
+void testarIntervalo(int n) {
+    long long *seq = malloc(sizeof(long long) * (n + 1));
+    long long *acumulador = calloc(sizeof(long long), n + 1);
+    
+    if (!seq || !acumulador) {
+        printf("Erro ao alocar memoria!\n");
+        return;
+    }
+    
+    printf("============================================\n");
+    printf("GERANDO SEQUENCIA a(n) = 4*a(n-1) + 1\n");
+    printf("============================================\n");
+    gerarSequencia(seq, n);
+    
+    printf("============================================\n");
+    printf("TESTANDO CONVERGENCIA PARA COLLATZ\n");
+    printf("============================================\n");
+    printf("Verificando se numeros entre a(%d)=%lld e a(%d)=%lld convergem\n\n", 
+           n-1, seq[n-1], n, seq[n]);
+    
+    time_t inicio = time(NULL);
+    long long totalTestados = 0;
+    long long totalConvergidos = 0;
+    long long potenciasDe2 = 0;
+    
+    // Testa todos os números entre seq[n-1]+1 e seq[n]-1
+    for (long long num = seq[n-1] + 1; num < seq[n]; num++) {
+        int indiceConvergencia = -1;
+        
+        if (verificarConvergencia(num, seq, n, &indiceConvergencia)) {
+            if (indiceConvergencia == -1) {
+                potenciasDe2++;
+            } else {
+                acumulador[indiceConvergencia]++;
+            }
+            totalConvergidos++;
+        } else {
+            printf("\nTeste INTERROMPIDO!\n");
+            free(seq);
+            free(acumulador);
+            return;
+        }
+        
+        totalTestados++;
+        
+        // Progresso a cada 10.000 números
+        if (totalTestados % 10000 == 0) {
+            printf("Progresso: %lld numeros testados...\n", totalTestados);
+        }
+    }
+    
+    time_t fim = time(NULL);
+    
+    printf("\n============================================\n");
+    printf("RESULTADOS\n");
+    printf("============================================\n");
+    printf("OK -- todos entre %lld e %lld convergiram\n", seq[n-1], seq[n]);
+    printf("Total testados: %lld\n", totalTestados);
+    printf("Total convergidos: %lld\n", totalConvergidos);
+    printf("Potencias de 2 (ignoradas): %lld\n", potenciasDe2);
+    printf("Tempo: %ld segundos\n\n", fim - inicio);
+    
+    printf("============================================\n");
+    printf("ACUMULADOR - DISTRIBUICAO DE CONVERGENCIA\n");
+    printf("============================================\n");
+    for (int i = 0; i <= n; i++) {
+        printf("a(%d)=%lld, convergiram %lld\n", i, seq[i], acumulador[i]);
+    }
+    
+    free(seq);
+    free(acumulador);
 }
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Uso: %s <fim>\n", argv[0]);
+        printf("Uso: %s <n>\n", argv[0]);
+        printf("Testa se todos os numeros entre a(n-1) e a(n) convergem para Collatz\n");
+        printf("onde a(i) = 4*a(i-1) + 1, com a(0) = 1\n");
         return 1;
     }
-
-    long long fim = atoll(argv[1]);
-    if (fim <= 0) {
-        printf("Parametro invalido: %s\n", argv[1]);
+    
+    int n = atoi(argv[1]);
+    if (n <= 0 || n > 15) {
+        printf("Parametro invalido. Use n entre 1 e 15\n");
         return 1;
     }
-
-    printf("Testando ate %lld\n", fim);
-    testeIntervalo(fim);
-
+    
+    testarIntervalo(n);
+    
     return 0;
 }
 
-// Para compilar: gcc -O3 TesteIntervaloManso.c -o TesteIntervaloManso
-// Para rodar: ./TesteIntervaloManso 100
+// Para compilar: gcc -O3 TesteSequenciaCollatz.c -o TesteSequenciaCollatz
+// Para rodar: ./TesteSequenciaCollatz 5
+// Isso testará números entre a(4)=341 e a(5)=1365

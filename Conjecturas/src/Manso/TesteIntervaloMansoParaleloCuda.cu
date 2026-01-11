@@ -166,5 +166,5 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-// Para compilar: nvcc -O3 TesteIntervaloMansoParalelo.cu -o TesteIntervaloMansoParalelo
-// Para rodar: ./TesteIntervaloMansoParalelo 100
+// Para compilar: nvcc -O3 TesteIntervaloMansoParaleloCuda.cu -o TesteIntervaloMansoParaleloCuda
+// Para rodar: ./TesteIntervaloMansoParaleloCuda 100
