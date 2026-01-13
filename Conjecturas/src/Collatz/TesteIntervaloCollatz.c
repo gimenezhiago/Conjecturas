@@ -159,4 +159,3 @@ int main(int argc, char *argv[]) {
 
 // Para compilar: gcc -O3 TesteSequenciaCollatz.c -o TesteSequenciaCollatz
 // Para rodar: ./TesteSequenciaCollatz 5
-// Isso testará números entre a(4)=341 e a(5)=1365

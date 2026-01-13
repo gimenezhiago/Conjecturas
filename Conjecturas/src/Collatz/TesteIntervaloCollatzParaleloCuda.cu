@@ -276,7 +276,7 @@ int main(int argc, char *argv[]) {
     
     int n = atoi(argv[1]);
     if (n <= 0 ) {
-        printf("Parametro invalido. Use n entre 1 e 15\n");
+        printf("Parametro invalido. Use n maior que zero\n");
         return 1;
     }
     
