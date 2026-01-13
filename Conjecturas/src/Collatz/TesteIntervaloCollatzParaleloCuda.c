@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #define LIMITE 10000000LL // 10 milhões de iterações
 
@@ -18,6 +19,10 @@ __device__ long long aplicarRegras(long long n) {
     if (n % 2 == 0) {
         return n / 2;
     } else {
+        // Evita overflow em 3*n + 1
+        if (n > (LLONG_MAX - 1) / 3) {
+            return -1; // sinaliza overflow
+        }
         return 3 * n + 1;
     }
 }
@@ -32,11 +37,11 @@ __global__ void testeConvergenciaKernel(long long inicio, long long fim,
                                          long long *seq, int tamanhoSeq,
                                          int *resultados, int *indices) {
     long long idx = blockIdx.x * blockDim.x + threadIdx.x;
+    long long total = fim - inicio + 1;
+    if (idx >= total) return; // evita threads extras
+
     long long numero = inicio + idx;
-
-    if (numero > fim) return;
-
-    long long local_idx = numero - inicio;
+    long long local_idx = idx; // índice relativo ao lote
 
     // Ignora potências de 2
     if (ehPotenciaDe2(numero)) {
@@ -65,7 +70,8 @@ __global__ void testeConvergenciaKernel(long long inicio, long long fim,
         atual = aplicarRegras(atual);
         contador++;
 
-        if (atual <= 0) {
+        // aplicarRegras retorna -1 em caso de overflow detectado
+        if (atual < 0) {
             printf("GPU: Numero %lld gerou overflow em %lld iteracoes!\n", numero, contador);
             resultados[local_idx] = -1;
             indices[local_idx] = -2;
@@ -99,7 +105,7 @@ void gerarSequencia(long long *seq, int n) {
 void testarIntervalo(int n) {
     // Aloca sequência na CPU
     long long *h_seq = (long long*)malloc(sizeof(long long) * (n + 1));
-    long long *acumulador = (long long*)calloc(sizeof(long long), n + 1);
+    long long *acumulador = (long long*)calloc((n + 1), sizeof(long long));
     
     if (!h_seq || !acumulador) {
         printf("Erro ao alocar memoria na CPU!\n");
@@ -172,7 +178,13 @@ void testarIntervalo(int n) {
         CUDA_CHECK(cudaMalloc(&d_resultados, numeros_neste_lote * sizeof(int)));
         CUDA_CHECK(cudaMalloc(&d_indices, numeros_neste_lote * sizeof(int)));
         CUDA_CHECK(cudaMemset(d_resultados, 0, numeros_neste_lote * sizeof(int)));
-        CUDA_CHECK(cudaMemset(d_indices, -2, numeros_neste_lote * sizeof(int)));
+
+        // Inicializa índices com -2 no host e copia para o device (cudaMemset com valor negativo é byte-wise)
+        int *h_init_indices = (int*)malloc(numeros_neste_lote * sizeof(int));
+        if (!h_init_indices) { fprintf(stderr, "Erro de alocacao host para indices\n"); exit(EXIT_FAILURE); }
+        for (long long ii = 0; ii < numeros_neste_lote; ++ii) h_init_indices[ii] = -2;
+        CUDA_CHECK(cudaMemcpy(d_indices, h_init_indices, numeros_neste_lote * sizeof(int), cudaMemcpyHostToDevice));
+        free(h_init_indices);
         
         // Executa kernel
         testeConvergenciaKernel<<<blocos, threadsPorBloco>>>(
@@ -263,7 +275,7 @@ int main(int argc, char *argv[]) {
     }
     
     int n = atoi(argv[1]);
-    if (n <= 0 || n > 15) {
+    if (n <= 0 ) {
         printf("Parametro invalido. Use n entre 1 e 15\n");
         return 1;
     }

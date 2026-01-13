@@ -3,12 +3,17 @@
 #include <stdlib.h>
 #include <time.h>
 #include <omp.h>
+#include <limits.h>
 
 // Regras de Collatz (par/ímpar)
 long long aplicarRegras(long long n) {
     if (n % 2 == 0) {
         return n / 2;
     } else {
+        // Evita overflow em 3*n + 1
+        if (n > (LLONG_MAX - 1) / 3) {
+            return -1; // sinaliza overflow
+        }
         return 3 * n + 1;
     }
 }
@@ -60,7 +65,7 @@ bool verificarConvergencia(long long num, long long *seq, int tamanhoSeq, int *i
 
 void testarIntervalo(int n) {
     long long *seq = malloc(sizeof(long long) * (n + 1));
-    long long *acumulador = calloc(sizeof(long long), n + 1);
+    long long *acumulador = calloc((n + 1), sizeof(long long));
     
     if (!seq || !acumulador) {
         printf("Erro ao alocar memoria!\n");
@@ -183,6 +188,15 @@ int main(int argc, char *argv[]) {
     if (n <= 0 || n > 15) {
         printf("Parametro invalido. Use n entre 1 e 15\n");
         return 1;
+    }
+
+    // Se passado, define numero de threads OpenMP
+    if (argc >= 3) {
+        int t = atoi(argv[2]);
+        if (t > 0) {
+            omp_set_num_threads(t);
+            printf("Usando %d threads OpenMP\n", t);
+        }
     }
     
     testarIntervalo(n);

@@ -2,12 +2,17 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
+#include <limits.h>
 
 // Regras de Collatz (par/ímpar)
 long long aplicarRegras(long long n) {
     if (n % 2 == 0) {
         return n / 2;
     } else {
+        // Evita overflow em 3*n + 1
+        if (n > (LLONG_MAX - 1) / 3) {
+            return -1; // sinaliza overflow
+        }
         return 3 * n + 1;
     }
 }
@@ -62,7 +67,7 @@ bool verificarConvergencia(long long num, long long *seq, int tamanhoSeq, int *i
 
 void testarIntervalo(int n) {
     long long *seq = malloc(sizeof(long long) * (n + 1));
-    long long *acumulador = calloc(sizeof(long long), n + 1);
+    long long *acumulador = calloc((n + 1), sizeof(long long));
     
     if (!seq || !acumulador) {
         printf("Erro ao alocar memoria!\n");
