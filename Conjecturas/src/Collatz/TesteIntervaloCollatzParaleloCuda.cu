@@ -137,7 +137,7 @@ void testarIntervalo(int n) {
     CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
     printf("GPU: %s\n", prop.name);
     printf("Compute Capability: %d.%d\n", prop.major, prop.minor);
-    printf("Multiprocessors: %d\n\n", prop.multiprocessorCount);
+    printf("Multiprocessors: %d\n\n", prop.multiProcessorCount);
     
     const int threadsPorBloco = 256;
     const long long max_numeros_por_lote = 1000000; // 1 milhão por lote
