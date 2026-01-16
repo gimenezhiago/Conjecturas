@@ -185,8 +185,8 @@ int main(int argc, char *argv[]) {
     }
     
     int n = atoi(argv[1]);
-    if (n <= 0 || n > 15) {
-        printf("Parametro invalido. Use n entre 1 e 15\n");
+    if (n <= 0) {
+        printf("Parametro invalido\n");
         return 1;
     }
 

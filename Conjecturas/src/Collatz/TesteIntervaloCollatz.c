@@ -1,8 +1,15 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <time.h>
+#include <sys/time.h>
 #include <limits.h>
+
+// Função para obter tempo de alta resolução
+double get_time() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec / 1000000.0;
+}
 
 // Regras de Collatz (par/ímpar)
 long long aplicarRegras(long long n) {
@@ -85,7 +92,7 @@ void testarIntervalo(int n) {
     printf("Verificando se numeros entre a(%d)=%lld e a(%d)=%lld convergem\n\n", 
            n-1, seq[n-1], n, seq[n]);
     
-    time_t inicio = time(NULL);
+    double inicio = get_time();
     long long totalTestados = 0;
     long long totalConvergidos = 0;
     long long potenciasDe2 = 0;
@@ -116,7 +123,8 @@ void testarIntervalo(int n) {
         }
     }
     
-    time_t fim = time(NULL);
+    double fim = get_time();
+    double tempo = fim - inicio;
     
     printf("\n============================================\n");
     printf("RESULTADOS\n");
@@ -125,7 +133,8 @@ void testarIntervalo(int n) {
     printf("Total testados: %lld\n", totalTestados);
     printf("Total convergidos: %lld\n", totalConvergidos);
     printf("Potencias de 2 (ignoradas): %lld\n", potenciasDe2);
-    printf("Tempo: %ld segundos\n\n", fim - inicio);
+    printf("Tempo: %.2f segundos\n", tempo);
+    printf("Throughput: %.0f numeros/segundo\n\n", totalTestados / tempo);
     
     printf("============================================\n");
     printf("ACUMULADOR - DISTRIBUICAO DE CONVERGENCIA\n");
@@ -147,8 +156,8 @@ int main(int argc, char *argv[]) {
     }
     
     int n = atoi(argv[1]);
-    if (n <= 0 || n > 15) {
-        printf("Parametro invalido. Use n entre 1 e 15\n");
+    if (n <= 0) {
+        printf("Parametro invalido\n");
         return 1;
     }
     
