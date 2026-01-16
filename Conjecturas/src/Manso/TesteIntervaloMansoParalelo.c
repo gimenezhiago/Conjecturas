@@ -40,7 +40,7 @@ void testeIntervalo(long long fim) {
     volatile int abortFlag = 0; // sinaliza para encerrar o laço quando um caso falhar
     long long i;
 
-    #pragma omp parallel for schedule(dynamic) default(none) shared(fim, LIMITE, abortFlag) private(i)
+    #pragma omp parallel for schedule(dynamic, 1000) default(none) shared(fim, LIMITE, abortFlag) private(i)
     for (i = 1; i <= fim; i++) {
         int localAbort = 0;
         #pragma omp atomic read
@@ -97,7 +97,7 @@ void testeIntervalo(long long fim) {
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Uso: %s <fim>\n", argv[0]);
+        printf("Uso: %s <fim> [num_threads]\n", argv[0]);
         return 1;
     }
 
@@ -105,6 +105,15 @@ int main(int argc, char *argv[]) {
     if (fim <= 0) {
         printf("Parametro invalido: %s\n", argv[1]);
         return 1;
+    }
+
+    // Se passado, define numero de threads OpenMP
+    if (argc >= 3) {
+        int t = atoi(argv[2]);
+        if (t > 0) {
+            omp_set_num_threads(t);
+            printf("Usando %d threads OpenMP\n", t);
+        }
     }
 
     printf("Testando ate %lld\n", fim);
