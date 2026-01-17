@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <omp.h>
+#include <time.h>
 
 inline long long somaDigitos(long long n) {
     long long soma = 0;
@@ -24,6 +25,8 @@ void testeIntervalo(long long fim) {
     const long long LIMITE = 1000000000000LL; // 1 trilhão
     volatile int abortFlag = 0; // sinaliza para encerrar o laço quando um caso falhar
     long long i;
+    
+    double inicio = omp_get_wtime();
 
     #pragma omp parallel for schedule(dynamic, 1000) default(none) shared(fim, LIMITE, abortFlag) private(i)
     for (i = 1; i <= fim; i++) {
@@ -77,6 +80,12 @@ void testeIntervalo(long long fim) {
         }
     }
 
+    double fim_tempo = omp_get_wtime();
+    double tempo_decorrido = fim_tempo - inicio;
+    double throughput = (tempo_decorrido > 0) ? fim / tempo_decorrido : 0;
+    
+    printf("\nTempo total: %.2f segundos\n", tempo_decorrido);
+    printf("Throughput: %.0f numeros/segundo\n", throughput);
     printf("Teste concluido ate %lld\n", fim);
 }
 

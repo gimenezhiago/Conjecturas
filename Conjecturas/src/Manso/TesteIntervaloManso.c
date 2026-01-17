@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h> //Para usar booleano
 #include <stdlib.h> //Para usar atoll
+#include <time.h> //Para medir tempo
 
 bool ehPrimo(long long n) {
     if (n <= 1) return false;
@@ -36,6 +37,7 @@ long long aplicarRegras(long long n) {
 
 void testeIntervalo(long long fim) {
     const long long LIMITE = 1000000000000; //1 trilhão
+    clock_t inicio = clock();
     for (long long i = 1; i <= fim; i++) {
         long long atual = i;
         long long contador = 0;
@@ -65,6 +67,13 @@ void testeIntervalo(long long fim) {
             printf("Testados %lld numeros\n", i);
         }
     }
+    
+    clock_t fim_tempo = clock();
+    double tempo_decorrido = (double)(fim_tempo - inicio) / CLOCKS_PER_SEC;
+    double throughput = (tempo_decorrido > 0) ? fim / tempo_decorrido : 0;
+    
+    printf("\nTempo total: %.2f segundos\n", tempo_decorrido);
+    printf("Throughput: %.0f numeros/segundo\n", throughput);
     printf("Teste concluido ate %lld\n", fim);
 }
 

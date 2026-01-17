@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define LIMITE 1000000000000LL //1 trilhão
 
@@ -72,6 +73,7 @@ void testeIntervalo(long long fim) {
     const int threadsPorBloco = 256;
     const long long max_numeros_por_lote = 1000000; // 1 milhão (ajuste conforme memória/GPU)
 
+    clock_t inicio = clock();
     printf("Threads por bloco: %d\n", threadsPorBloco);
 
     for (long long lote_inicio = 1; lote_inicio <= fim; lote_inicio += max_numeros_por_lote) {
@@ -124,6 +126,12 @@ void testeIntervalo(long long fim) {
         }
     }
 
+    clock_t fim_tempo = clock();
+    double tempo_decorrido = (double)(fim_tempo - inicio) / CLOCKS_PER_SEC;
+    double throughput = (tempo_decorrido > 0) ? fim / tempo_decorrido : 0;
+    
+    printf("\nTempo total: %.2f segundos\n", tempo_decorrido);
+    printf("Throughput: %.0f numeros/segundo\n", throughput);
     printf("Teste de intervalo concluido ate %lld\n", fim);
 }
 
