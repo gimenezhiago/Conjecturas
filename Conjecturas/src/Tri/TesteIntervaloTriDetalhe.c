@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include <stdbool.h> //Para usar booleano
+#include <stdlib.h> //Para usar atoll
 #include <math.h>
 
 bool ehPrimo(long long n) {
@@ -42,35 +42,36 @@ long long triangular(int m) {
 
 void testeIntervalo(long long fim) {
     const long long LIMITE = 1000000000000; //1 trilhão
-
     for (long long i = 1; i <= fim; i++) {
         long long atual = triangular(i) * triangular(i + 1);
         long long contador = 0;
         bool convergiu = false;
+        long long valorFinal = 0;
 
         while (contador < LIMITE) {
             if (ehPrimo(atual) || ehQuadradoPrimo(atual)) {
                 convergiu = true;
+                valorFinal = atual;
                 break;
             }
+
             atual = aplicarRegrasTri(atual);
             contador++;
-            if (atual <= 0) {
+
+            if (atual <= 0) { // checagem simples para overflow/valor inválido
                 printf("O numero %lld gerou valor invalido/overflow em %lld iteracoes. ultimo valor = %lld\n", i, contador, atual);
                 break;
             }
         }
 
-        if (!convergiu) {
-            printf("O numero %lld nao convergiu (>%lld iteracoes). ultimo valor = %lld\n", i, LIMITE, atual);
+        if (convergiu) {
+            printf("%lld -> %lld em %lld passos\n", i, valorFinal, contador);
+        } else {
+            printf("O numero %lld nao convergiu (> %lld iteracoes). ultimo valor = %lld\n", i, LIMITE, atual);
             break;
         }
 
-        if (i % 100000 == 0) {
-            printf("Testados %lld numeros\n", i);
-        }
     }
-
     printf("Teste concluido ate %lld\n", fim);
 }
 
@@ -82,15 +83,16 @@ int main(int argc, char *argv[]) {
 
     long long fim = atoll(argv[1]);
     if (fim <= 0) {
-        printf("Parâmetro inválido: %s\n", argv[1]);
+        printf("Parametro invalido: %s\n", argv[1]);
         return 1;
     }
 
     printf("Testando ate %lld\n", fim);
+    printf("============================================\n");
     testeIntervalo(fim);
 
     return 0;
 }
 
-// Para compilar: gcc -O3 TesteIntervaloTri.c -o TesteIntervaloTri
-// Para rodar: ./TesteIntervaloTri 100
+// Para compilar: gcc -O3 TesteIntervaloTriDetalhe.c -o TesteIntervaloTriDetalhe
+// Para rodar: ./TesteIntervaloTriDetalhe 100
