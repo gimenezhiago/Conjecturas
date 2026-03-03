@@ -78,3 +78,6 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
+// Para compilar: gcc -O3 TesteIntervaloCrivoImparBITSET.c -o TesteIntervaloCrivoImparBITSET
+// Para rodar: ./TesteIntervaloCrivoImparBITSET 100
