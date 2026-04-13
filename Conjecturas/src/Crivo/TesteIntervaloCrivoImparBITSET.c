@@ -9,7 +9,7 @@
 
 // BLOCO = numero de impares cobertos por segmento (igual ao BOOL)
 // BITSET usa 1 bit por impar → bloco ocupa BLOCO/8 bytes
-#define BLOCO 1048576LL
+#define BLOCO 8388608LL 
 
 void testeCrivo(long long N) {
     if (N < 2) { printf("Nao ha primos.\n"); return; }
