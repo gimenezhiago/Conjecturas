@@ -151,3 +151,6 @@ int main(int argc,char**argv){
     printf("Tempo          : %.3fs\n",tempo);
     printf("Resolvido      : %s\n",pop[0].f>=FIT_MAX?"SIM":"NAO");
 }
+
+// Para compilar: g++ -std=c++17 -O2 -o sequencial sequencial.cpp
+// Para rodar:    ./sequencial
