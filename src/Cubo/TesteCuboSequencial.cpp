@@ -152,5 +152,5 @@ int main(int argc,char**argv){
     printf("Resolvido      : %s\n",pop[0].f>=FIT_MAX?"SIM":"NAO");
 }
 
-// Para compilar: g++ -std=c++17 -O2 -o sequencial sequencial.cpp
-// Para rodar:    ./sequencial
+// Para compilar: g++ -O3 -o TesteCuboSequencial TesteCuboSequencial.cpp
+// Para rodar:    ./TesteCuboSequencial

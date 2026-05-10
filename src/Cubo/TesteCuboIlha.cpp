@@ -185,6 +185,6 @@ int main(int argc,char**argv){
     for(int id=0;id<NUM_ILHAS;id++)printf("  Ilha %d : %.2f%s\n",id,ilhas[id].pop[0].f,ilhas[id].ok?" [RESOLVEU]":"");
 }
 
-// Para compilar: g++ -std=c++17 -O2 -o tbb_ilhas tbb_ilhas.cpp -ltbb
-// Para rodar:    ./tbb_ilhas <numero_de_threads>
-// Exemplo:       ./tbb_ilhas 4
+// Para compilar: g++ -O3 -o TesteCuboIlha TesteCuboIlha.cpp -ltbb
+// Para rodar:    ./tbbTesteCuboIlha_ilhas <numero_de_threads>
+// Exemplo:       ./TesteCuboIlha 4

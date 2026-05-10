@@ -148,6 +148,6 @@ int main(int argc,char**argv){
     printf("Resolvido      : %s\n",pop[0].f>=FIT_MAX?"SIM":"NAO");
 }
 
-// Para compilar: g++ -std=c++17 -O2 -o tbb_fitness tbb_fitness.cpp -ltbb
-// Para rodar:    ./tbb_fitness <numero_de_threads>
-// Exemplo:       ./tbb_fitness 4
+// Para compilar: g++ -O3 -o TesteCuboIlha TesteCuboIlha.cpp -ltbb
+// Para rodar:    ./TesteCuboIlha <numero_de_threads>
+// Exemplo:       ./TesteCuboIlha 4
