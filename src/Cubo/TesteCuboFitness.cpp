@@ -115,10 +115,11 @@ int main(int argc,char**argv){
     std::sort(pop.begin(),pop.end(),[](const Ind&a,const Ind&b){return a.f>b.f;});
 
     float taxa=TAX_MUT_INI;int estag=0;float mg=-1;
+    int g_conv=0;
     clock_t t0=clock();
 
     for(int g=1;g<=MAX_GER&&estag<MAX_ESTAG;g++){
-        if(pop[0].f>=FIT_MAX)break;
+        if(pop[0].f>=FIT_MAX){g_conv=g;break;}
 
         std::vector<Ind>filhos(TAM_POP);
         tbb::parallel_for(tbb::blocked_range<int>(0,TAM_POP),
@@ -139,15 +140,17 @@ int main(int argc,char**argv){
 
         if(pop[0].f>mg){mg=pop[0].f;estag=0;taxa=TAX_MUT_INI;}
         else{estag++;taxa+=TAX_MUT_INC;}
+        g_conv=g;
         if(g%50==0||g==1)printf("  Ger %3d | fitness %.2f | estag %d\n",g,pop[0].f,estag);
     }
 
     double tempo=(double)(clock()-t0)/CLOCKS_PER_SEC;
     printf("\nMelhor fitness : %.2f/100\n",pop[0].f);
     printf("Tempo          : %.3fs\n",tempo);
+    printf("Gerações       : %d\n",g_conv);
     printf("Resolvido      : %s\n",pop[0].f>=FIT_MAX?"SIM":"NAO");
 }
 
-// Para compilar: g++ -O3 -o TesteCuboIlha TesteCuboIlha.cpp -ltbb
-// Para rodar:    ./TesteCuboIlha <numero_de_threads>
-// Exemplo:       ./TesteCuboIlha 4
+// Para compilar: g++ -O3 -o TesteCuboFitness TesteCuboFitness.cpp -ltbb
+// Para rodar:    ./TesteCuboFitness <numero_de_threads>
+// Exemplo:       ./TesteCuboFitness 4

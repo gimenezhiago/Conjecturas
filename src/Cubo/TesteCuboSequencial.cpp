@@ -119,6 +119,7 @@ int main(int argc,char**argv){
 
     std::mt19937 rng(std::random_device{}());
     float taxa=TAX_MUT_INI;int estag=0;float mg=-1;
+    int g_conv=0;
 
     std::vector<Ind>pop(TAM_POP);
     for(auto&ind:pop){
@@ -130,7 +131,7 @@ int main(int argc,char**argv){
 
     clock_t t0=clock();
     for(int g=1;g<=MAX_GER&&estag<MAX_ESTAG;g++){
-        if(pop[0].f>=FIT_MAX)break;
+        if(pop[0].f>=FIT_MAX){g_conv=g;break;}
         std::vector<Ind>filhos;filhos.reserve(TAM_POP);
         while((int)filhos.size()<TAM_POP){
             int a,b;torneio(pop,a,b,rng);
@@ -144,11 +145,13 @@ int main(int argc,char**argv){
         pop.resize(TAM_POP);
         if(pop[0].f>mg){mg=pop[0].f;estag=0;taxa=TAX_MUT_INI;}
         else{estag++;taxa+=TAX_MUT_INC;}
+        g_conv=g;
         if(g%50==0||g==1)printf("  Ger %3d | fitness %.2f | estag %d\n",g,pop[0].f,estag);
     }
     double tempo=(double)(clock()-t0)/CLOCKS_PER_SEC;
     printf("\nMelhor fitness : %.2f/100\n",pop[0].f);
     printf("Tempo          : %.3fs\n",tempo);
+    printf("Gerações       : %d\n",g_conv);
     printf("Resolvido      : %s\n",pop[0].f>=FIT_MAX?"SIM":"NAO");
 }
 

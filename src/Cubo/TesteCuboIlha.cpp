@@ -124,6 +124,7 @@ int main(int argc,char**argv){
 
     clock_t t0=clock();
     bool solucao=false;
+    int g_conv=0;
 
     for(int g=1;g<=MAX_GER&&!solucao;g++){
         tbb::parallel_for(0,NUM_ILHAS,[&](int id){
@@ -147,6 +148,7 @@ int main(int argc,char**argv){
             else{ilha.estag++;ilha.taxa+=TAX_MUT_INC;}
         });
 
+        g_conv=g;
         for(int id=0;id<NUM_ILHAS;id++)if(ilhas[id].ok){solucao=true;break;}
         if(solucao)break;
 
@@ -180,11 +182,12 @@ int main(int argc,char**argv){
     float bf=-1;for(int id=0;id<NUM_ILHAS;id++)if(ilhas[id].pop[0].f>bf)bf=ilhas[id].pop[0].f;
     printf("\nMelhor fitness : %.2f/100\n",bf);
     printf("Tempo          : %.3fs\n",tempo);
+    printf("Gerações       : %d\n",g_conv);
     printf("Resolvido      : %s\n",solucao?"SIM":"NAO");
     printf("\nFitness por ilha:\n");
     for(int id=0;id<NUM_ILHAS;id++)printf("  Ilha %d : %.2f%s\n",id,ilhas[id].pop[0].f,ilhas[id].ok?" [RESOLVEU]":"");
 }
 
 // Para compilar: g++ -O3 -o TesteCuboIlha TesteCuboIlha.cpp -ltbb
-// Para rodar:    ./tbbTesteCuboIlha_ilhas <numero_de_threads>
+// Para rodar:    ./TesteCuboIlha <numero_de_threads>
 // Exemplo:       ./TesteCuboIlha 4
