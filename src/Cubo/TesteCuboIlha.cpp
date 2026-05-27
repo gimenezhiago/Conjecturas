@@ -17,16 +17,17 @@
 #define L 5
 #define NUM_MOV         18
 #define NUM_ILHAS       4
-#define TAM_ILHA        1250
+#define TAM_ILHA        5000
 #define TAM_POP         (NUM_ILHAS*TAM_ILHA)
-#define MAX_GER         300
-#define MAX_ESTAG       30
-#define TAX_MUT_INI     0.01f
+#define MAX_GER         1000
+#define MAX_ESTAG       50
+#define TAX_MUT_INI     0.02f
 #define TAX_MUT_INC     0.005f
-#define TAM_CROMO       20
+#define TAM_CROMO       50
 #define FIT_MAX         100.0f
 #define INTERVALO_MIG   20
-#define TAM_MIG         5
+#define TAM_MIG         10
+#define N_EMBARALHA     20
 
 static const int FC[4]={-1,-5,-9,-6};
 static const int FB[4]={-96,-78,35,-6};
@@ -104,11 +105,12 @@ int main(int argc,char**argv){
 
     printf("=== TBB — MODELO DE ILHAS ===\n");
     printf("Threads : %u | Ilhas: %d | Por ilha: %d | Total: %d\n",nthreads,NUM_ILHAS,TAM_ILHA,TAM_POP);
+    printf("Pop: %d | Cromo: %d | MaxGer: %d | Embaralha: %d\n",TAM_POP,TAM_CROMO,MAX_GER,N_EMBARALHA);
     printf("Migracao a cada %d geracoes, %d migrantes\n\n",INTERVALO_MIG,TAM_MIG);
 
     tbb::global_control gc(tbb::global_control::max_allowed_parallelism,nthreads);
 
-    Cubo cubo;cubo_init(cubo);embaralhar(cubo,7);
+    Cubo cubo;cubo_init(cubo);embaralhar(cubo,N_EMBARALHA);
 
     std::vector<Ilha>ilhas(NUM_ILHAS);
     tbb::parallel_for(0,NUM_ILHAS,[&](int id){
@@ -170,9 +172,9 @@ int main(int argc,char**argv){
         for(int id=0;id<NUM_ILHAS;id++)if(ilhas[id].estag<MAX_ESTAG){todas_estag=false;break;}
         if(todas_estag)break;
 
-        if(g%50==0||g==1){
+        if(g%100==0||g==1){
             float bf=-1;for(int id=0;id<NUM_ILHAS;id++)if(ilhas[id].pop[0].f>bf)bf=ilhas[id].pop[0].f;
-            printf("  Ger %3d | melhor %.2f",g,bf);
+            printf("  Ger %4d | melhor %.2f",g,bf);
             for(int id=0;id<NUM_ILHAS;id++)printf(" | ilha%d %.2f",id,ilhas[id].pop[0].f);
             printf("\n");
         }
@@ -190,4 +192,3 @@ int main(int argc,char**argv){
 
 // Para compilar: g++ -O3 -o TesteCuboIlha TesteCuboIlha.cpp -ltbb
 // Para rodar:    ./TesteCuboIlha <numero_de_threads>
-// Exemplo:       ./TesteCuboIlha 4
