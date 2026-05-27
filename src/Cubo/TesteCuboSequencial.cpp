@@ -12,13 +12,14 @@
 #define R 4
 #define L 5
 #define NUM_MOV         18
-#define TAM_POP         5000
-#define MAX_GER         300
-#define MAX_ESTAG       30
-#define TAX_MUT_INI     0.01f
+#define TAM_POP         20000
+#define MAX_GER         1000
+#define MAX_ESTAG       50
+#define TAX_MUT_INI     0.02f
 #define TAX_MUT_INC     0.005f
-#define TAM_CROMO       20
+#define TAM_CROMO       50
 #define FIT_MAX         100.0f
+#define N_EMBARALHA     20
 
 static const int FC[4]={-1,-5,-9,-6};
 static const int FB[4]={-96,-78,35,-6};
@@ -113,9 +114,10 @@ void embaralhar(Cubo&c,int n){
 int main(int argc,char**argv){
     (void)argc;(void)argv;
     printf("=== SEQUENCIAL ===\n");
-    printf("Threads : 1 (sem paralelismo)\n\n");
+    printf("Threads : 1 (sem paralelismo)\n");
+    printf("Pop: %d | Cromo: %d | MaxGer: %d | Embaralha: %d\n\n",TAM_POP,TAM_CROMO,MAX_GER,N_EMBARALHA);
 
-    Cubo cubo;cubo_init(cubo);embaralhar(cubo,7);
+    Cubo cubo;cubo_init(cubo);embaralhar(cubo,N_EMBARALHA);
 
     std::mt19937 rng(std::random_device{}());
     float taxa=TAX_MUT_INI;int estag=0;float mg=-1;
@@ -146,7 +148,7 @@ int main(int argc,char**argv){
         if(pop[0].f>mg){mg=pop[0].f;estag=0;taxa=TAX_MUT_INI;}
         else{estag++;taxa+=TAX_MUT_INC;}
         g_conv=g;
-        if(g%50==0||g==1)printf("  Ger %3d | fitness %.2f | estag %d\n",g,pop[0].f,estag);
+        if(g%100==0||g==1)printf("  Ger %4d | fitness %.2f | estag %d\n",g,pop[0].f,estag);
     }
     double tempo=(double)(clock()-t0)/CLOCKS_PER_SEC;
     printf("\nMelhor fitness : %.2f/100\n",pop[0].f);
