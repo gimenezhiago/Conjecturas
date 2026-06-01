@@ -27,7 +27,6 @@
 #define FIT_MAX         100.0f
 #define INTERVALO_MIG   20
 #define TAM_MIG         10
-#define N_EMBARALHA     20
 
 static const int FC[4]={-1,-5,-9,-6};
 static const int FB[4]={-96,-78,35,-6};
@@ -36,18 +35,14 @@ static const int BORDAS[12][2][3]={
     {{F,1,2},{R,1,0}},{{F,1,0},{L,1,2}},{{B,1,0},{R,1,2}},{{B,1,2},{L,1,0}},
     {{D,0,1},{F,2,1}},{{D,1,2},{R,2,1}},{{D,2,1},{B,2,1}},{{D,1,0},{L,2,1}}
 };
-static const int BCOR[12][2]={
-    {U,F},{U,R},{U,B},{U,L},{F,R},{F,L},{B,R},{B,L},{D,F},{D,R},{D,B},{D,L}
-};
+static const int BCOR[12][2]={{U,F},{U,R},{U,B},{U,L},{F,R},{F,L},{B,R},{B,L},{D,F},{D,R},{D,B},{D,L}};
 static const int CANTOS[8][3][3]={
     {{U,2,2},{F,0,2},{R,0,0}},{{U,2,0},{F,0,0},{L,0,2}},
     {{U,0,2},{B,0,0},{R,0,2}},{{U,0,0},{B,0,2},{L,0,0}},
     {{D,0,2},{F,2,2},{R,2,0}},{{D,0,0},{F,2,0},{L,2,2}},
     {{D,2,2},{B,2,0},{R,2,2}},{{D,2,0},{B,2,2},{L,2,0}}
 };
-static const int CCOR[8][3]={
-    {U,F,R},{U,F,L},{U,B,R},{U,B,L},{D,F,R},{D,F,L},{D,B,R},{D,B,L}
-};
+static const int CCOR[8][3]={{U,F,R},{U,F,L},{U,B,R},{U,B,L},{D,F,R},{D,F,L},{D,B,R},{D,B,L}};
 
 struct Cubo{int face[6][3][3];};
 
@@ -90,27 +85,31 @@ Ind cruzar(const Ind&p1,const Ind&p2,std::mt19937&rng){
 }
 void mutar(Ind&ind,std::mt19937&rng){ind.v[rng()%ind.v.size()]=rng()%NUM_MOV;}
 
-void embaralhar(Cubo&c,int n){
-    std::mt19937 r(42);
+void embaralhar(Cubo&c,int n,unsigned seed){
+    std::mt19937 r(seed);
     static const char*nm[18]={"U","D","F","B","R","L","U'","D'","F'","B'","R'","L'","U2","D2","F2","B2","R2","L2"};
-    printf("Embaralhamento (%d mov): ",n);
-    for(int i=0;i<n;i++){int m=r()%NUM_MOV;aplicar_mov(c,m);printf("%s ",nm[m]);}printf("\n");
+    fprintf(stderr,"Embaralhamento (%d mov): ",n);
+    for(int i=0;i<n;i++){int m=r()%NUM_MOV;aplicar_mov(c,m);fprintf(stderr,"%s ",nm[m]);}fprintf(stderr,"\n");
 }
 
 struct Ilha{std::vector<Ind>pop;float taxa=TAX_MUT_INI;int estag=0;float mg=-1;bool ok=false;};
 
 int main(int argc,char**argv){
-    unsigned nthreads=(argc>1)?(unsigned)atoi(argv[1]):tbb::info::default_concurrency();
-    if(nthreads<1)nthreads=1;
+    // Usage: ./TesteCuboIlha <n_embaralha> <n_threads> [seed]
+    int n_embaralha  = (argc>1) ? atoi(argv[1]) : 20;
+    unsigned nthreads= (argc>2) ? (unsigned)atoi(argv[2]) : tbb::info::default_concurrency();
+    unsigned seed    = (argc>3) ? (unsigned)atoi(argv[3]) : 42;
 
-    printf("=== TBB — MODELO DE ILHAS ===\n");
-    printf("Threads : %u | Ilhas: %d | Por ilha: %d | Total: %d\n",nthreads,NUM_ILHAS,TAM_ILHA,TAM_POP);
-    printf("Pop: %d | Cromo: %d | MaxGer: %d | Embaralha: %d\n",TAM_POP,TAM_CROMO,MAX_GER,N_EMBARALHA);
-    printf("Migracao a cada %d geracoes, %d migrantes\n\n",INTERVALO_MIG,TAM_MIG);
+    if(n_embaralha < 1 || n_embaralha > 30){ fprintf(stderr,"ERRO: n_embaralha deve ser entre 1 e 30\n"); return 1; }
+    if(nthreads < 1) nthreads = 1;
+
+    fprintf(stderr,"=== TBB — MODELO DE ILHAS ===\n");
+    fprintf(stderr,"Threads: %u | Ilhas: %d | Por ilha: %d | Total: %d | Embaralha: %d | Seed: %u\n\n",
+            nthreads,NUM_ILHAS,TAM_ILHA,TAM_POP,n_embaralha,seed);
 
     tbb::global_control gc(tbb::global_control::max_allowed_parallelism,nthreads);
 
-    Cubo cubo;cubo_init(cubo);embaralhar(cubo,N_EMBARALHA);
+    Cubo cubo; cubo_init(cubo); embaralhar(cubo,n_embaralha,seed);
 
     std::vector<Ilha>ilhas(NUM_ILHAS);
     tbb::parallel_for(0,NUM_ILHAS,[&](int id){
@@ -125,15 +124,13 @@ int main(int argc,char**argv){
     });
 
     clock_t t0=clock();
-    bool solucao=false;
-    int g_conv=0;
+    bool solucao=false; int g_conv=0;
 
     for(int g=1;g<=MAX_GER&&!solucao;g++){
         tbb::parallel_for(0,NUM_ILHAS,[&](int id){
             if(ilhas[id].ok)return;
             Ilha&ilha=ilhas[id];
             std::mt19937 rng(std::random_device{}()^((uint32_t)id*2246822519u+(uint32_t)g*374761393u));
-
             std::vector<Ind>filhos(TAM_ILHA);
             for(int i=0;i<TAM_ILHA;i++){
                 int a,b;torneio(ilha.pop,a,b,rng);
@@ -144,7 +141,6 @@ int main(int argc,char**argv){
             for(auto&f:filhos)ilha.pop.push_back(std::move(f));
             std::sort(ilha.pop.begin(),ilha.pop.end(),[](const Ind&a,const Ind&b){return a.f>b.f;});
             ilha.pop.resize(TAM_ILHA);
-
             if(ilha.pop[0].f>=FIT_MAX){ilha.ok=true;return;}
             if(ilha.pop[0].f>ilha.mg){ilha.mg=ilha.pop[0].f;ilha.estag=0;ilha.taxa=TAX_MUT_INI;}
             else{ilha.estag++;ilha.taxa+=TAX_MUT_INC;}
@@ -157,13 +153,11 @@ int main(int argc,char**argv){
         if(g%INTERVALO_MIG==0){
             std::vector<Ind>pool;
             for(int id=0;id<NUM_ILHAS;id++)
-                for(int k=0;k<TAM_MIG;k++)
-                    pool.push_back(ilhas[id].pop[k]);
+                for(int k=0;k<TAM_MIG;k++)pool.push_back(ilhas[id].pop[k]);
             std::sort(pool.begin(),pool.end(),[](const Ind&a,const Ind&b){return a.f>b.f;});
             for(int id=0;id<NUM_ILHAS;id++){
                 int dest=(id+1)%NUM_ILHAS;
-                for(int k=0;k<TAM_MIG;k++)
-                    ilhas[dest].pop[TAM_ILHA-1-k]=pool[id*TAM_MIG+k];
+                for(int k=0;k<TAM_MIG;k++)ilhas[dest].pop[TAM_ILHA-1-k]=pool[id*TAM_MIG+k];
                 std::sort(ilhas[dest].pop.begin(),ilhas[dest].pop.end(),[](const Ind&a,const Ind&b){return a.f>b.f;});
             }
         }
@@ -171,24 +165,22 @@ int main(int argc,char**argv){
         bool todas_estag=true;
         for(int id=0;id<NUM_ILHAS;id++)if(ilhas[id].estag<MAX_ESTAG){todas_estag=false;break;}
         if(todas_estag)break;
-
-        if(g%100==0||g==1){
-            float bf=-1;for(int id=0;id<NUM_ILHAS;id++)if(ilhas[id].pop[0].f>bf)bf=ilhas[id].pop[0].f;
-            printf("  Ger %4d | melhor %.2f",g,bf);
-            for(int id=0;id<NUM_ILHAS;id++)printf(" | ilha%d %.2f",id,ilhas[id].pop[0].f);
-            printf("\n");
-        }
     }
 
     double tempo=(double)(clock()-t0)/CLOCKS_PER_SEC;
-    float bf=-1;for(int id=0;id<NUM_ILHAS;id++)if(ilhas[id].pop[0].f>bf)bf=ilhas[id].pop[0].f;
-    printf("\nMelhor fitness : %.2f/100\n",bf);
-    printf("Tempo          : %.3fs\n",tempo);
-    printf("Gerações       : %d\n",g_conv);
-    printf("Resolvido      : %s\n",solucao?"SIM":"NAO");
-    printf("\nFitness por ilha:\n");
-    for(int id=0;id<NUM_ILHAS;id++)printf("  Ilha %d : %.2f%s\n",id,ilhas[id].pop[0].f,ilhas[id].ok?" [RESOLVEU]":"");
-}
+    float bf=-1;
+    for(int id=0;id<NUM_ILHAS;id++)if(ilhas[id].pop[0].f>bf)bf=ilhas[id].pop[0].f;
 
-// Para compilar: g++ -O3 -o TesteCuboIlha TesteCuboIlha.cpp -ltbb
-// Para rodar:    ./TesteCuboIlha <numero_de_threads>
+    // OUTPUT CSV para o script Python
+    printf("RESULTADO,ModeloIlhas,%u,%d,%.4f,%.3f,%s,%d\n",
+           nthreads, n_embaralha, bf, tempo,
+           solucao?"SIM":"NAO", g_conv);
+
+    fprintf(stderr,"\nMelhor fitness : %.2f/100\n",bf);
+    fprintf(stderr,"Tempo          : %.3fs\n",tempo);
+    fprintf(stderr,"Gerações       : %d\n",g_conv);
+    fprintf(stderr,"Resolvido      : %s\n",solucao?"SIM":"NAO");
+    return 0;
+}
+// Compilar: g++ -O3 -o TesteCuboIlha TesteCuboIlha.cpp -ltbb
+// Rodar:    ./TesteCuboIlha <n_mov> <n_threads> [seed]
