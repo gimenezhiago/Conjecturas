@@ -23,7 +23,6 @@
 #define TAX_MUT_INC     0.005f
 #define TAM_CROMO       50
 #define FIT_MAX         100.0f
-#define N_EMBARALHA     20
 
 static const int FC[4]={-1,-5,-9,-6};
 static const int FB[4]={-96,-78,35,-6};
@@ -32,18 +31,14 @@ static const int BORDAS[12][2][3]={
     {{F,1,2},{R,1,0}},{{F,1,0},{L,1,2}},{{B,1,0},{R,1,2}},{{B,1,2},{L,1,0}},
     {{D,0,1},{F,2,1}},{{D,1,2},{R,2,1}},{{D,2,1},{B,2,1}},{{D,1,0},{L,2,1}}
 };
-static const int BCOR[12][2]={
-    {U,F},{U,R},{U,B},{U,L},{F,R},{F,L},{B,R},{B,L},{D,F},{D,R},{D,B},{D,L}
-};
+static const int BCOR[12][2]={{U,F},{U,R},{U,B},{U,L},{F,R},{F,L},{B,R},{B,L},{D,F},{D,R},{D,B},{D,L}};
 static const int CANTOS[8][3][3]={
     {{U,2,2},{F,0,2},{R,0,0}},{{U,2,0},{F,0,0},{L,0,2}},
     {{U,0,2},{B,0,0},{R,0,2}},{{U,0,0},{B,0,2},{L,0,0}},
     {{D,0,2},{F,2,2},{R,2,0}},{{D,0,0},{F,2,0},{L,2,2}},
     {{D,2,2},{B,2,0},{R,2,2}},{{D,2,0},{B,2,2},{L,2,0}}
 };
-static const int CCOR[8][3]={
-    {U,F,R},{U,F,L},{U,B,R},{U,B,L},{D,F,R},{D,F,L},{D,B,R},{D,B,L}
-};
+static const int CCOR[8][3]={{U,F,R},{U,F,L},{U,B,R},{U,B,L},{D,F,R},{D,F,L},{D,B,R},{D,B,L}};
 
 struct Cubo{int face[6][3][3];};
 
@@ -85,24 +80,29 @@ Ind cruzar(const Ind&p1,const Ind&p2,std::mt19937&rng){
 }
 void mutar(Ind&ind,std::mt19937&rng){ind.v[rng()%ind.v.size()]=rng()%NUM_MOV;}
 
-void embaralhar(Cubo&c,int n){
-    std::mt19937 r(42);
+void embaralhar(Cubo&c,int n,unsigned seed){
+    std::mt19937 r(seed);
     static const char*nm[18]={"U","D","F","B","R","L","U'","D'","F'","B'","R'","L'","U2","D2","F2","B2","R2","L2"};
-    printf("Embaralhamento (%d mov): ",n);
-    for(int i=0;i<n;i++){int m=r()%NUM_MOV;aplicar_mov(c,m);printf("%s ",nm[m]);}printf("\n");
+    fprintf(stderr,"Embaralhamento (%d mov): ",n);
+    for(int i=0;i<n;i++){int m=r()%NUM_MOV;aplicar_mov(c,m);fprintf(stderr,"%s ",nm[m]);}fprintf(stderr,"\n");
 }
 
 int main(int argc,char**argv){
-    unsigned nthreads=(argc>1)?(unsigned)atoi(argv[1]):tbb::info::default_concurrency();
-    if(nthreads<1)nthreads=1;
+    // Usage: ./TesteCuboFitness <n_embaralha> <n_threads> [seed]
+    int n_embaralha  = (argc>1) ? atoi(argv[1]) : 20;
+    unsigned nthreads= (argc>2) ? (unsigned)atoi(argv[2]) : tbb::info::default_concurrency();
+    unsigned seed    = (argc>3) ? (unsigned)atoi(argv[3]) : 42;
 
-    printf("=== TBB — FITNESS PARALELO ===\n");
-    printf("Threads : %u\n",nthreads);
-    printf("Pop: %d | Cromo: %d | MaxGer: %d | Embaralha: %d\n\n",TAM_POP,TAM_CROMO,MAX_GER,N_EMBARALHA);
+    if(n_embaralha < 1 || n_embaralha > 30){ fprintf(stderr,"ERRO: n_embaralha deve ser entre 1 e 30\n"); return 1; }
+    if(nthreads < 1) nthreads = 1;
+
+    fprintf(stderr,"=== TBB — FITNESS PARALELO ===\n");
+    fprintf(stderr,"Threads: %u | Pop: %d | Cromo: %d | MaxGer: %d | Embaralha: %d | Seed: %u\n\n",
+            nthreads,TAM_POP,TAM_CROMO,MAX_GER,n_embaralha,seed);
 
     tbb::global_control gc(tbb::global_control::max_allowed_parallelism,nthreads);
 
-    Cubo cubo;cubo_init(cubo);embaralhar(cubo,N_EMBARALHA);
+    Cubo cubo; cubo_init(cubo); embaralhar(cubo,n_embaralha,seed);
 
     std::vector<Ind>pop(TAM_POP);
     tbb::parallel_for(tbb::blocked_range<int>(0,TAM_POP),
@@ -116,13 +116,11 @@ int main(int argc,char**argv){
         });
     std::sort(pop.begin(),pop.end(),[](const Ind&a,const Ind&b){return a.f>b.f;});
 
-    float taxa=TAX_MUT_INI;int estag=0;float mg=-1;
-    int g_conv=0;
+    float taxa=TAX_MUT_INI; int estag=0; float mg=-1; int g_conv=0;
     clock_t t0=clock();
 
     for(int g=1;g<=MAX_GER&&estag<MAX_ESTAG;g++){
         if(pop[0].f>=FIT_MAX){g_conv=g;break;}
-
         std::vector<Ind>filhos(TAM_POP);
         tbb::parallel_for(tbb::blocked_range<int>(0,TAM_POP),
             [&](const tbb::blocked_range<int>&r){
@@ -135,23 +133,27 @@ int main(int argc,char**argv){
                     filhos[i].f=fitness(cubo,filhos[i].v);
                 }
             });
-
         for(auto&f:filhos)pop.push_back(std::move(f));
         std::sort(pop.begin(),pop.end(),[](const Ind&a,const Ind&b){return a.f>b.f;});
         pop.resize(TAM_POP);
-
         if(pop[0].f>mg){mg=pop[0].f;estag=0;taxa=TAX_MUT_INI;}
         else{estag++;taxa+=TAX_MUT_INC;}
         g_conv=g;
-        if(g%100==0||g==1)printf("  Ger %4d | fitness %.2f | estag %d\n",g,pop[0].f,estag);
     }
 
     double tempo=(double)(clock()-t0)/CLOCKS_PER_SEC;
-    printf("\nMelhor fitness : %.2f/100\n",pop[0].f);
-    printf("Tempo          : %.3fs\n",tempo);
-    printf("Gerações       : %d\n",g_conv);
-    printf("Resolvido      : %s\n",pop[0].f>=FIT_MAX?"SIM":"NAO");
-}
 
-// Para compilar: g++ -O3 -o TesteCuboFitness TesteCuboFitness.cpp -ltbb
-// Para rodar:    ./TesteCuboFitness <numero_de_threads>
+    // OUTPUT CSV para o script Python
+    // FORMAT: RESULTADO,algo,threads,mov,fitness,tempo,resolvido,geracao
+    printf("RESULTADO,FitnessParalelo,%u,%d,%.4f,%.3f,%s,%d\n",
+           nthreads, n_embaralha, pop[0].f, tempo,
+           pop[0].f>=FIT_MAX?"SIM":"NAO", g_conv);
+
+    fprintf(stderr,"\nMelhor fitness : %.2f/100\n",pop[0].f);
+    fprintf(stderr,"Tempo          : %.3fs\n",tempo);
+    fprintf(stderr,"Gerações       : %d\n",g_conv);
+    fprintf(stderr,"Resolvido      : %s\n",pop[0].f>=FIT_MAX?"SIM":"NAO");
+    return 0;
+}
+// Compilar: g++ -O3 -o TesteCuboFitness TesteCuboFitness.cpp -ltbb
+// Rodar:    ./TesteCuboFitness <n_mov> <n_threads> [seed]
