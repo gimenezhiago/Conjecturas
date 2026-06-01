@@ -19,7 +19,6 @@
 #define TAX_MUT_INC     0.005f
 #define TAM_CROMO       50
 #define FIT_MAX         100.0f
-#define N_EMBARALHA     20
 
 static const int FC[4]={-1,-5,-9,-6};
 static const int FB[4]={-96,-78,35,-6};
@@ -28,29 +27,20 @@ static const int BORDAS[12][2][3]={
     {{F,1,2},{R,1,0}},{{F,1,0},{L,1,2}},{{B,1,0},{R,1,2}},{{B,1,2},{L,1,0}},
     {{D,0,1},{F,2,1}},{{D,1,2},{R,2,1}},{{D,2,1},{B,2,1}},{{D,1,0},{L,2,1}}
 };
-static const int BCOR[12][2]={
-    {U,F},{U,R},{U,B},{U,L},{F,R},{F,L},{B,R},{B,L},{D,F},{D,R},{D,B},{D,L}
-};
+static const int BCOR[12][2]={{U,F},{U,R},{U,B},{U,L},{F,R},{F,L},{B,R},{B,L},{D,F},{D,R},{D,B},{D,L}};
 static const int CANTOS[8][3][3]={
     {{U,2,2},{F,0,2},{R,0,0}},{{U,2,0},{F,0,0},{L,0,2}},
     {{U,0,2},{B,0,0},{R,0,2}},{{U,0,0},{B,0,2},{L,0,0}},
     {{D,0,2},{F,2,2},{R,2,0}},{{D,0,0},{F,2,0},{L,2,2}},
     {{D,2,2},{B,2,0},{R,2,2}},{{D,2,0},{B,2,2},{L,2,0}}
 };
-static const int CCOR[8][3]={
-    {U,F,R},{U,F,L},{U,B,R},{U,B,L},{D,F,R},{D,F,L},{D,B,R},{D,B,L}
-};
+static const int CCOR[8][3]={{U,F,R},{U,F,L},{U,B,R},{U,B,L},{D,F,R},{D,F,L},{D,B,R},{D,B,L}};
 
-struct Cubo { int face[6][3][3]; };
+struct Cubo{int face[6][3][3];};
 
 void cubo_init(Cubo&c){for(int f=0;f<6;f++)for(int i=0;i<3;i++)for(int j=0;j<3;j++)c.face[f][i][j]=f;}
 bool resolvido(const Cubo&c){for(int f=0;f<6;f++)for(int i=0;i<3;i++)for(int j=0;j<3;j++)if(c.face[f][i][j]!=f)return false;return true;}
-
-static void rot(Cubo&c,int f,int cw){
-    int t[3][3];for(int i=0;i<3;i++)for(int j=0;j<3;j++)t[i][j]=c.face[f][i][j];
-    if(cw){for(int i=0;i<3;i++)for(int j=0;j<3;j++)c.face[f][j][2-i]=t[i][j];}
-    else  {for(int i=0;i<3;i++)for(int j=0;j<3;j++)c.face[f][2-j][i]=t[i][j];}
-}
+static void rot(Cubo&c,int f,int cw){int t[3][3];for(int i=0;i<3;i++)for(int j=0;j<3;j++)t[i][j]=c.face[f][i][j];if(cw){for(int i=0;i<3;i++)for(int j=0;j<3;j++)c.face[f][j][2-i]=t[i][j];}else{for(int i=0;i<3;i++)for(int j=0;j<3;j++)c.face[f][2-j][i]=t[i][j];}}
 static void mU(Cubo&c){rot(c,U,1);int t[3];for(int j=0;j<3;j++)t[j]=c.face[F][0][j];for(int j=0;j<3;j++)c.face[F][0][j]=c.face[R][0][j];for(int j=0;j<3;j++)c.face[R][0][j]=c.face[B][0][j];for(int j=0;j<3;j++)c.face[B][0][j]=c.face[L][0][j];for(int j=0;j<3;j++)c.face[L][0][j]=t[j];}
 static void mD(Cubo&c){rot(c,D,1);int t[3];for(int j=0;j<3;j++)t[j]=c.face[F][2][j];for(int j=0;j<3;j++)c.face[F][2][j]=c.face[L][2][j];for(int j=0;j<3;j++)c.face[L][2][j]=c.face[B][2][j];for(int j=0;j<3;j++)c.face[B][2][j]=c.face[R][2][j];for(int j=0;j<3;j++)c.face[R][2][j]=t[j];}
 static void mF(Cubo&c){rot(c,F,1);int t[3];for(int j=0;j<3;j++)t[j]=c.face[U][2][j];for(int j=0;j<3;j++)c.face[U][2][j]=c.face[L][2-j][2];for(int j=0;j<3;j++)c.face[L][j][2]=c.face[D][0][j];for(int j=0;j<3;j++)c.face[D][0][j]=c.face[R][2-j][0];for(int j=0;j<3;j++)c.face[R][j][0]=t[j];}
@@ -58,28 +48,11 @@ static void mB(Cubo&c){rot(c,B,1);int t[3];for(int j=0;j<3;j++)t[j]=c.face[U][0]
 static void mR(Cubo&c){rot(c,R,1);int t[3];for(int i=0;i<3;i++)t[i]=c.face[U][i][2];for(int i=0;i<3;i++)c.face[U][i][2]=c.face[F][i][2];for(int i=0;i<3;i++)c.face[F][i][2]=c.face[D][i][2];for(int i=0;i<3;i++)c.face[D][i][2]=c.face[B][2-i][0];for(int i=0;i<3;i++)c.face[B][2-i][0]=t[i];}
 static void mL(Cubo&c){rot(c,L,1);int t[3];for(int i=0;i<3;i++)t[i]=c.face[U][i][0];for(int i=0;i<3;i++)c.face[U][i][0]=c.face[B][2-i][2];for(int i=0;i<3;i++)c.face[B][2-i][2]=c.face[D][i][0];for(int i=0;i<3;i++)c.face[D][i][0]=c.face[F][i][0];for(int i=0;i<3;i++)c.face[F][i][0]=t[i];}
 
-void aplicar_mov(Cubo&c,int m){
-    void(*tab[6])(Cubo&)={mU,mD,mF,mB,mR,mL};
-    int b=m%6,tp=m/6;
-    if(tp==0)tab[b](c);else if(tp==1){tab[b](c);tab[b](c);tab[b](c);}else{tab[b](c);tab[b](c);}
-}
+void aplicar_mov(Cubo&c,int m){void(*tab[6])(Cubo&)={mU,mD,mF,mB,mR,mL};int b=m%6,tp=m/6;if(tp==0)tab[b](c);else if(tp==1){tab[b](c);tab[b](c);tab[b](c);}else{tab[b](c);tab[b](c);}}
 void aplicar(Cubo&c,const std::vector<int>&v){for(int m:v)aplicar_mov(c,m);}
 
-static int eb(const Cubo&c,int i){
-    int c0=c.face[BORDAS[i][0][0]][BORDAS[i][0][1]][BORDAS[i][0][2]];
-    int c1=c.face[BORDAS[i][1][0]][BORDAS[i][1][1]][BORDAS[i][1][2]];
-    int e0=BCOR[i][0],e1=BCOR[i][1];
-    if(c0==e0&&c1==e1)return 0;if(c0==e1&&c1==e0)return 2;
-    if(c0==e0||c1==e1)return 1;return 3;
-}
-static int ec(const Cubo&c,int i){
-    int co[3],es[3];
-    for(int k=0;k<3;k++){co[k]=c.face[CANTOS[i][k][0]][CANTOS[i][k][1]][CANTOS[i][k][2]];es[k]=CCOR[i][k];}
-    int ct=0;for(int k=0;k<3;k++)if(co[k]==es[k])ct++;
-    if(ct==3)return 0;
-    int tm=0;for(int k=0;k<3;k++)for(int m=0;m<3;m++)if(co[k]==es[m]){tm++;break;}
-    if(tm==3&&ct==0)return 2;if(ct==1)return 1;return 3;
-}
+static int eb(const Cubo&c,int i){int c0=c.face[BORDAS[i][0][0]][BORDAS[i][0][1]][BORDAS[i][0][2]];int c1=c.face[BORDAS[i][1][0]][BORDAS[i][1][1]][BORDAS[i][1][2]];int e0=BCOR[i][0],e1=BCOR[i][1];if(c0==e0&&c1==e1)return 0;if(c0==e1&&c1==e0)return 2;if(c0==e0||c1==e1)return 1;return 3;}
+static int ec(const Cubo&c,int i){int co[3],es[3];for(int k=0;k<3;k++){co[k]=c.face[CANTOS[i][k][0]][CANTOS[i][k][1]][CANTOS[i][k][2]];es[k]=CCOR[i][k];}int ct=0;for(int k=0;k<3;k++)if(co[k]==es[k])ct++;if(ct==3)return 0;int tm=0;for(int k=0;k<3;k++)for(int m=0;m<3;m++)if(co[k]==es[m]){tm++;break;}if(tm==3&&ct==0)return 2;if(ct==1)return 1;return 3;}
 
 float fitness(const Cubo&orig,const std::vector<int>&v){
     Cubo c=orig;aplicar(c,v);
@@ -103,25 +76,32 @@ Ind cruzar(const Ind&p1,const Ind&p2,std::mt19937&rng){
 }
 void mutar(Ind&ind,std::mt19937&rng){ind.v[rng()%ind.v.size()]=rng()%NUM_MOV;}
 
-void embaralhar(Cubo&c,int n){
-    std::mt19937 r(42);
+void embaralhar(Cubo&c,int n,unsigned seed){
+    std::mt19937 r(seed);
     static const char*nm[18]={"U","D","F","B","R","L","U'","D'","F'","B'","R'","L'","U2","D2","F2","B2","R2","L2"};
-    printf("Embaralhamento (%d mov): ",n);
-    for(int i=0;i<n;i++){int m=r()%NUM_MOV;aplicar_mov(c,m);printf("%s ",nm[m]);}
-    printf("\n");
+    fprintf(stderr,"Embaralhamento (%d mov): ",n);
+    for(int i=0;i<n;i++){int m=r()%NUM_MOV;aplicar_mov(c,m);fprintf(stderr,"%s ",nm[m]);}fprintf(stderr,"\n");
 }
 
 int main(int argc,char**argv){
-    (void)argc;(void)argv;
-    printf("=== SEQUENCIAL ===\n");
-    printf("Threads : 1 (sem paralelismo)\n");
-    printf("Pop: %d | Cromo: %d | MaxGer: %d | Embaralha: %d\n\n",TAM_POP,TAM_CROMO,MAX_GER,N_EMBARALHA);
+    // Usage: ./TesteCuboSequencial <n_embaralha> [seed]
+    int n_embaralha = (argc>1) ? atoi(argv[1]) : 20;
+    unsigned seed   = (argc>2) ? (unsigned)atoi(argv[2]) : 42;
 
-    Cubo cubo;cubo_init(cubo);embaralhar(cubo,N_EMBARALHA);
+    if(n_embaralha < 1 || n_embaralha > 30){
+        fprintf(stderr,"ERRO: n_embaralha deve ser entre 1 e 30\n");
+        return 1;
+    }
+
+    fprintf(stderr,"=== SEQUENCIAL ===\n");
+    fprintf(stderr,"Threads : 1 (sem paralelismo)\n");
+    fprintf(stderr,"Pop: %d | Cromo: %d | MaxGer: %d | Embaralha: %d | Seed: %u\n\n",
+            TAM_POP,TAM_CROMO,MAX_GER,n_embaralha,seed);
+
+    Cubo cubo; cubo_init(cubo); embaralhar(cubo,n_embaralha,seed);
 
     std::mt19937 rng(std::random_device{}());
-    float taxa=TAX_MUT_INI;int estag=0;float mg=-1;
-    int g_conv=0;
+    float taxa=TAX_MUT_INI; int estag=0; float mg=-1; int g_conv=0;
 
     std::vector<Ind>pop(TAM_POP);
     for(auto&ind:pop){
@@ -148,14 +128,21 @@ int main(int argc,char**argv){
         if(pop[0].f>mg){mg=pop[0].f;estag=0;taxa=TAX_MUT_INI;}
         else{estag++;taxa+=TAX_MUT_INC;}
         g_conv=g;
-        if(g%100==0||g==1)printf("  Ger %4d | fitness %.2f | estag %d\n",g,pop[0].f,estag);
     }
     double tempo=(double)(clock()-t0)/CLOCKS_PER_SEC;
-    printf("\nMelhor fitness : %.2f/100\n",pop[0].f);
-    printf("Tempo          : %.3fs\n",tempo);
-    printf("Gerações       : %d\n",g_conv);
-    printf("Resolvido      : %s\n",pop[0].f>=FIT_MAX?"SIM":"NAO");
-}
 
-// Para compilar: g++ -O3 -o TesteCuboSequencial TesteCuboSequencial.cpp
-// Para rodar:    ./TesteCuboSequencial
+    // Output em formato CSV para o script Python parsear
+    // FORMAT: algo,threads,mov,fitness,tempo,resolvido,geracao
+    printf("RESULTADO,Sequencial,1,%d,%.4f,%.3f,%s,%d\n",
+           n_embaralha, pop[0].f, tempo,
+           pop[0].f>=FIT_MAX?"SIM":"NAO", g_conv);
+
+    // Também imprime legível no stderr
+    fprintf(stderr,"\nMelhor fitness : %.2f/100\n",pop[0].f);
+    fprintf(stderr,"Tempo          : %.3fs\n",tempo);
+    fprintf(stderr,"Gerações       : %d\n",g_conv);
+    fprintf(stderr,"Resolvido      : %s\n",pop[0].f>=FIT_MAX?"SIM":"NAO");
+    return 0;
+}
+// Compilar: g++ -O3 -o TesteCuboSequencial TesteCuboSequencial.cpp
+// Rodar:    ./TesteCuboSequencial <n_mov> [seed]
