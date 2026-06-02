@@ -1,10 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <time.h>
 #include <math.h>
+#include <sys/resource.h>
 
 #define BLOCO 1048576LL
+
+static long long get_mem_kb(void) {
+    struct rusage ru;
+    getrusage(RUSAGE_SELF, &ru);
+#ifdef __APPLE__
+    return ru.ru_maxrss / 1024;
+#else
+    return ru.ru_maxrss;
+#endif
+}
 
 void testeCrivo(long long N) {
     if (N < 2) { printf("Nao ha primos.\n"); return; }
@@ -13,12 +23,10 @@ void testeCrivo(long long N) {
     long long tam_pequeno = (limite / 2) + 2;
 
     bool *pequeno = calloc(tam_pequeno, sizeof(bool));
-    if (!pequeno) { printf("Erro de alocacao.\n"); return; }
+    if (!pequeno) { fprintf(stderr, "Erro de alocacao.\n"); return; }
 
-    long long total_primos = 1; // conta o 2
+    long long total_primos = 1;
     long long total_marcacoes = 0;
-
-    clock_t inicio = clock();
 
     for (long long i = 1; 2*i+1 <= limite; i++) {
         if (!pequeno[i]) {
@@ -34,7 +42,7 @@ void testeCrivo(long long N) {
         if (!pequeno[i]) n_pp++;
 
     long long *primos_p = malloc(n_pp * sizeof(long long));
-    if (!primos_p) { free(pequeno); printf("Erro de alocacao.\n"); return; }
+    if (!primos_p) { free(pequeno); fprintf(stderr, "Erro de alocacao.\n"); return; }
 
     long long idx = 0;
     for (long long i = 1; i < tam_pequeno; i++)
@@ -44,9 +52,8 @@ void testeCrivo(long long N) {
     for (long long i = 0; i < n_pp; i++)
         if (primos_p[i] <= N) total_primos++;
 
-    // bloco cobre BLOCO impares → BLOCO bytes (1 bool por impar)
     bool *bloco = malloc(BLOCO * sizeof(bool));
-    if (!bloco) { free(primos_p); printf("Erro de alocacao.\n"); return; }
+    if (!bloco) { free(primos_p); fprintf(stderr, "Erro de alocacao.\n"); return; }
 
     long long base = limite + 1;
     if (base % 2 == 0) base++;
@@ -77,32 +84,22 @@ void testeCrivo(long long N) {
         base = topo + 2;
     }
 
-    clock_t fim = clock();
-    double tempo = (double)(fim - inicio) / CLOCKS_PER_SEC;
-    double throughput = (tempo > 0) ? N / tempo : 0;
+    long long mem_kb = get_mem_kb();
 
-    // memoria = fase pequena + bloco de trabalho (em bytes)
-    long long mem_bytes = tam_pequeno * sizeof(bool) + BLOCO * sizeof(bool);
-
-    printf("\n===== RESULTADOS (BOOL SEGMENTADO) =====\n");
-    printf("N                  = %lld\n", N);
-    printf("Primos encontrados = %lld\n", total_primos);
-    printf("Total de marcacoes = %lld\n", total_marcacoes);
-    printf("Tamanho do bloco   = %lld impares (%lld bytes)\n", BLOCO, BLOCO * (long long)sizeof(bool));
-    printf("Memoria usada      = %.4f MB\n", mem_bytes / 1048576.0);
-    printf("Tempo total        = %.4f s\n", tempo);
-    printf("Throughput         = %.0f numeros/s\n", throughput);
+    printf("PRIMOS=%lld\n", total_primos);
+    printf("MARCACOES=%lld\n", total_marcacoes);
+    printf("MEM_KB=%lld\n", mem_kb);
 
     free(bloco);
     free(primos_p);
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) { printf("Uso: %s <N>\n", argv[0]); return 1; }
+    if (argc < 2) { fprintf(stderr, "Uso: %s <N>\n", argv[0]); return 1; }
     long long N = atoll(argv[1]);
     testeCrivo(N);
     return 0;
 }
 
-// Para compilar: gcc -O3 TesteIntervaloCrivoImpar.c -o TesteIntervaloCrivoImpar -lm
-// Para rodar:    ./TesteIntervaloCrivoImpar 100000000000
+// Compilar: gcc -O3 TesteIntervaloCrivoImpar.c -o TesteIntervaloCrivoImpar -lm
+// Rodar:    ./TesteIntervaloCrivoImpar 100000000000
