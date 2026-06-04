@@ -21,7 +21,7 @@
 #define MAX_ESTAG       50
 #define TAX_MUT_INI     0.02f
 #define TAX_MUT_INC     0.005f
-#define TAM_CROMO       50
+#define TAM_CROMO       18
 #define FIT_MAX         100.0f
 #define INTERVALO_MIG   20
 #define TAM_MIG         10
